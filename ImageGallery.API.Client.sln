@@ -5,9 +5,15 @@ VisualStudioVersion = 15.0.27729.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{3E131F3E-F5FA-42AC-81D0-10C540B25EDF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageGallery.API.Client.Console", "src\ImageGallery.API.Client.Console\ImageGallery.API.Client.Console.csproj", "{A8558BF1-FD0A-4B63-ACBF-3CA84829AA26}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImageGallery.API.Client.Console", "src\ImageGallery.API.Client.Console\ImageGallery.API.Client.Console.csproj", "{A8558BF1-FD0A-4B63-ACBF-3CA84829AA26}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Constants", "src\Constants\Constants.csproj", "{E3D4F7C3-0896-4FA0-A53C-CE30E1047DA5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Constants", "src\Constants\Constants.csproj", "{E3D4F7C3-0896-4FA0-A53C-CE30E1047DA5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{7228B49A-AEC6-46AE-A4C5-A0706D5883C6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageGallery.API.Client.Test", "test\ImageGallery.API.Client.Test\ImageGallery.API.Client.Test.csproj", "{A8FBC6D8-3F22-4A08-BF57-1554386EC2D3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageGallery.FlickrService", "src\ImageGallery.FlickrService\ImageGallery.FlickrService.csproj", "{4D0C5099-458E-461A-919A-F4D263726D2B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,6 +29,14 @@ Global
 		{E3D4F7C3-0896-4FA0-A53C-CE30E1047DA5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E3D4F7C3-0896-4FA0-A53C-CE30E1047DA5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E3D4F7C3-0896-4FA0-A53C-CE30E1047DA5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A8FBC6D8-3F22-4A08-BF57-1554386EC2D3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A8FBC6D8-3F22-4A08-BF57-1554386EC2D3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A8FBC6D8-3F22-4A08-BF57-1554386EC2D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A8FBC6D8-3F22-4A08-BF57-1554386EC2D3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4D0C5099-458E-461A-919A-F4D263726D2B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4D0C5099-458E-461A-919A-F4D263726D2B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4D0C5099-458E-461A-919A-F4D263726D2B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4D0C5099-458E-461A-919A-F4D263726D2B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -30,6 +44,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{A8558BF1-FD0A-4B63-ACBF-3CA84829AA26} = {3E131F3E-F5FA-42AC-81D0-10C540B25EDF}
 		{E3D4F7C3-0896-4FA0-A53C-CE30E1047DA5} = {3E131F3E-F5FA-42AC-81D0-10C540B25EDF}
+		{4D0C5099-458E-461A-919A-F4D263726D2B} = {3E131F3E-F5FA-42AC-81D0-10C540B25EDF}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {26FF2C3E-FF5A-4035-8412-7A17442B3405}
