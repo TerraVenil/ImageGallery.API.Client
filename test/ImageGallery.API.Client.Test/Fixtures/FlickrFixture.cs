@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using ImageGallery.FlickrService;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ImageGallery.API.Client.Test.Fixtures
 {
@@ -30,7 +32,16 @@ namespace ImageGallery.API.Client.Test.Fixtures
             Secret = builder.GetSection("flickrSettings:secret").Value;
 
             this.Flickr = new FlickrNet.Flickr(ApiKey, Secret);
+
+            var serviceProvider = new ServiceCollection()
+                .AddScoped<ISearchService>(s => new SearchService(ApiKey, Secret))
+                .BuildServiceProvider();
+
+            SearchService = serviceProvider.GetRequiredService<ISearchService>();
+
         }
+
+        public ISearchService SearchService { get; private set; }
 
         public void Dispose()
         {

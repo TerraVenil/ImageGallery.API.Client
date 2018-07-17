@@ -8,16 +8,16 @@ namespace ImageGallery.FlickrService
 {
     public class SearchService : ISearchService
     {
-        private readonly Flickr flickr;
+        private readonly Flickr _flickr;
 
         public SearchService(string apiKey, string secret)
         {
-            this.flickr = new Flickr(apiKey, secret);
+            this._flickr = new Flickr(apiKey, secret);
         }
 
         public async Task<PhotoInfo> GetPhotoInfo(string photoId)
         {
-            var photoInfo = await flickr.PhotosGetInfoAsync(photoId);  
+            var photoInfo = await _flickr.PhotosGetInfoAsync(photoId);  
             return photoInfo;
         }
 
@@ -32,7 +32,7 @@ namespace ImageGallery.FlickrService
         public IList<Photo> SearchPhotos(PhotoSearchOptions photoSearchOptions)
         {
             var photos = new List<Photo>();
-            var total = flickr.PhotosSearchAsync(photoSearchOptions).Result.Total;
+            var total = _flickr.PhotosSearchAsync(photoSearchOptions).Result.Total;
 
             //var searchOptions = photoSearchOptions;
             //var pages = PagingHelper.CalculatePages(total, photoSearchOptions.PerPage);
