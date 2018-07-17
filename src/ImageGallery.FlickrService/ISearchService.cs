@@ -1,11 +1,12 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using FlickrNet;
 
 namespace ImageGallery.FlickrService
 {
     public interface ISearchService
     {
-        PhotoInfo GetPhotoInfo(string photoId);
+        Task<PhotoInfo> GetPhotoInfo(string photoId);
 
         IList<PhotoInfo> GetPhotoInfoList(IEnumerable<string> photoIdList);
 

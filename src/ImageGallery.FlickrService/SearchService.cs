@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 using FlickrNet;
 
 namespace ImageGallery.FlickrService
@@ -14,12 +15,14 @@ namespace ImageGallery.FlickrService
             this.flickr = new Flickr(apiKey, secret);
         }
 
-        public PhotoInfo GetPhotoInfo(string photoId)
+        public async Task<PhotoInfo> GetPhotoInfo(string photoId)
         {
-            throw new NotImplementedException();
-            //var photoInfo = flickr.PhotosGetInfo(photoId);
-            //return photoInfo;
+            var photoInfo = await flickr.PhotosGetInfoAsync(photoId);  
+            return photoInfo;
         }
+
+
+
 
         public IList<PhotoInfo> GetPhotoInfoList(IEnumerable<string> photoIdList)
         {
