@@ -6,10 +6,8 @@ namespace ImageGallery.FlickrService
 {
     public interface ISearchService
     {
-        Task<PhotoInfo> GetPhotoInfo(string photoId);
+        Task<PhotoInfo> GetPhotoInfoAsync(string photoId);
 
-        IList<PhotoInfo> GetPhotoInfoList(IEnumerable<string> photoIdList);
-
-        IList<Photo> SearchPhotos(PhotoSearchOptions photoSearchOptions);
+        Task<IList<Photo>> SearchPhotosAsync(PhotoSearchOptions photoSearchOptions);
     }
 }

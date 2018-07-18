@@ -1,4 +1,5 @@
 ﻿using System;
+using FlickrNet;
 using ImageGallery.API.Client.Test.Fixtures;
 using ImageGallery.FlickrService;
 using Xunit;
@@ -24,7 +25,7 @@ namespace ImageGallery.API.Client.Test.Flickr
         [InlineData("9250911801")]
         public async void Can_Get_Photo_Info(string photoId)
         {
-            var photoInfo = await searchService.GetPhotoInfo(photoId);
+            var photoInfo = await searchService.GetPhotoInfoAsync(photoId);
             foreach (var tag in photoInfo.Tags)
             {
                 _output.WriteLine($"IsMachineTag{tag.IsMachineTag}");
@@ -33,11 +34,19 @@ namespace ImageGallery.API.Client.Test.Flickr
             Assert.NotNull(photoInfo);
         }
 
+        [Theory]
+        [InlineData("machine_tags => nychalloffame:")]
+        public async void Can_Search_Photos_by_MachineTag_Namespace(string namespaceQuery)
+        {
+            var photoSearchOptions = new PhotoSearchOptions()
+            {
+                MachineTags = namespaceQuery,
+                Extras = PhotoSearchExtras.All,
+            };
 
-
-
-
-
+            var photoCollection = await searchService.SearchPhotosAsync(photoSearchOptions);
+            Assert.NotNull(photoCollection);
+        }
 
         [Theory]
         [InlineData("47222519@N07")]
@@ -47,9 +56,6 @@ namespace ImageGallery.API.Client.Test.Flickr
 
             Assert.NotEmpty(results);
         }
-
-
-
 
     }
 }

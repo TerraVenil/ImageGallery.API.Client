@@ -1,8 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using FlickrNet;
+using ImageGallery.FlickrService.Helpers;
 
 namespace ImageGallery.FlickrService
 {
@@ -10,39 +9,32 @@ namespace ImageGallery.FlickrService
     {
         private readonly Flickr _flickr;
 
+        private const int DefaultPageSize = 50;
         public SearchService(string apiKey, string secret)
         {
             this._flickr = new Flickr(apiKey, secret);
         }
 
-        public async Task<PhotoInfo> GetPhotoInfo(string photoId)
+        public async Task<PhotoInfo> GetPhotoInfoAsync(string photoId)
         {
             var photoInfo = await _flickr.PhotosGetInfoAsync(photoId);  
             return photoInfo;
         }
 
-
-
-
-        public IList<PhotoInfo> GetPhotoInfoList(IEnumerable<string> photoIdList)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IList<Photo> SearchPhotos(PhotoSearchOptions photoSearchOptions)
+        public async Task<IList<Photo>> SearchPhotosAsync(PhotoSearchOptions photoSearchOptions)
         {
             var photos = new List<Photo>();
+            var defaultPageSize = photoSearchOptions.PerPage != 0 ? photoSearchOptions.Page : DefaultPageSize;
             var total = _flickr.PhotosSearchAsync(photoSearchOptions).Result.Total;
 
-            //var searchOptions = photoSearchOptions;
-            //var pages = PagingHelper.CalculatePages(total, photoSearchOptions.PerPage);
+            var pages = PagingUtil.CalculateNumberOfPages(total, defaultPageSize);
 
-            //for (int i = 0; i <= pages; i++)
-            //{
-            //    searchOptions.Page = i;
-            //    PhotoCollection photoCollection = flickr.PhotosSearchAsync(photoSearchOptions);
-            //    photos.AddRange(photoCollection);
-            //}
+            for (int i = 1; i <= pages; i++)
+            {
+                photoSearchOptions.Page = i;
+                var photoCollection = await _flickr.PhotosSearchAsync(photoSearchOptions);
+                photos.AddRange(photoCollection);
+            };
 
             return photos;
         }
