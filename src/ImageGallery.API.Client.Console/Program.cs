@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using IdentityModel.Client;
 using System.Net.Http;
 using System.Threading.Tasks;
+using ImageGallery.API.Client.Console.Models;
 using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace ImageGallery.API.Client.Console
@@ -19,9 +22,9 @@ namespace ImageGallery.API.Client.Console
             .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development"}.json", optional: true)
             .Build();
 
-        public static void Main(string[] args) => MainAsync().GetAwaiter().GetResult();
+        public static int Main(string[] args) => MainAsync().GetAwaiter().GetResult();
 
-        private static async Task MainAsync()
+        private static async Task<int> MainAsync()
         {
             IConfiguration configuration = Configuration;
 
@@ -41,7 +44,7 @@ namespace ImageGallery.API.Client.Console
             if (disco.IsError)
             {
                 System.Console.WriteLine(disco.Error);
-                return;
+                return 1;
             }
 
             // request token
@@ -51,7 +54,7 @@ namespace ImageGallery.API.Client.Console
             if (tokenResponse.IsError)
             {
                 System.Console.WriteLine(tokenResponse.Error);
-                return;
+                return 1;
             }
 
             System.Console.WriteLine(tokenResponse.Json);
@@ -64,15 +67,18 @@ namespace ImageGallery.API.Client.Console
             var response = await client.GetAsync($"{imageGalleryApi}/api/images");
             if (!response.IsSuccessStatusCode)
             {
-                System.Console.WriteLine(response.StatusCode);
+                 System.Console.WriteLine(response.StatusCode);
             }
             else
             {
                 var content = await response.Content.ReadAsStringAsync();
+                var images = JsonConvert.DeserializeObject<List<ImageModel>>(content);  
                 System.Console.WriteLine(JArray.Parse(content));
+                System.Console.WriteLine($"ImagesCount:{images.Count}");
             }
 
             System.Console.ReadLine();
+            return 0;
         }
     }
 }
