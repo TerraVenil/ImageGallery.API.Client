@@ -29,6 +29,10 @@ namespace ImageGallery.API.Client.Console
             var apisecret = (configuration["openIdConnectConfiguration:apisecret"]);
             var clientId = (configuration["openIdConnectConfiguration:clientId"]);
 
+            var imageGalleryApi = (configuration["imagegallery-api:uri"]);
+            var login = (configuration["imagegallery-api:login"]);
+            var password = (configuration["imagegallery-api:password"]);
+
             System.Console.WriteLine($"Auth:{auth}");
             System.Console.WriteLine($"ClientId:{clientId}");
 
@@ -42,7 +46,7 @@ namespace ImageGallery.API.Client.Console
 
             // request token
             var tokenClient = new TokenClient(disco.TokenEndpoint, clientId, apisecret);
-            var tokenResponse = await tokenClient.RequestResourceOwnerPasswordAsync("Frank", "password", "imagegalleryapi");
+            var tokenResponse = await tokenClient.RequestResourceOwnerPasswordAsync(login, password, "imagegalleryapi");
 
             if (tokenResponse.IsError)
             {
@@ -57,7 +61,7 @@ namespace ImageGallery.API.Client.Console
             var client = new HttpClient();
             client.SetBearerToken(tokenResponse.AccessToken);
 
-            var response = await client.GetAsync($"https://imagegallery-api.informationcart.com/api/images");
+            var response = await client.GetAsync($"{imageGalleryApi}/api/images");
             if (!response.IsSuccessStatusCode)
             {
                 System.Console.WriteLine(response.StatusCode);
@@ -67,6 +71,8 @@ namespace ImageGallery.API.Client.Console
                 var content = await response.Content.ReadAsStringAsync();
                 System.Console.WriteLine(JArray.Parse(content));
             }
+
+            System.Console.ReadLine();
         }
     }
 }
