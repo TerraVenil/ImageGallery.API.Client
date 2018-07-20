@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using IdentityModel.Client;
 using System.Net.Http;
 using System.Threading.Tasks;
-using ImageGallery.API.Client.Console.Configuration;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
 
@@ -28,18 +26,14 @@ namespace ImageGallery.API.Client.Console
             IConfiguration configuration = Configuration;
 
             var auth = (configuration["openIdConnectConfiguration:authority"]);
+            var apisecret = (configuration["openIdConnectConfiguration:apisecret"]);
             var clientId = (configuration["openIdConnectConfiguration:clientId"]);
 
             System.Console.WriteLine($"Auth:{auth}");
             System.Console.WriteLine($"ClientId:{clientId}");
 
-
-
-
-
-
             // discover endpoints from metadata
-            var disco = await DiscoveryClient.GetAsync("https://proxy-nginx:8081");
+            var disco = await DiscoveryClient.GetAsync(auth);
             if (disco.IsError)
             {
                 System.Console.WriteLine(disco.Error);
@@ -47,9 +41,9 @@ namespace ImageGallery.API.Client.Console
             }
 
             // request token
-            var tokenClient = new TokenClient(disco.TokenEndpoint, "imagegalleryclient06", "secret");
-            var tokenResponse = await tokenClient.RequestClientCredentialsAsync("imagegalleryapi");
-             
+            var tokenClient = new TokenClient(disco.TokenEndpoint, clientId, apisecret);
+            var tokenResponse = await tokenClient.RequestResourceOwnerPasswordAsync("Frank", "password", "imagegalleryapi");
+
             if (tokenResponse.IsError)
             {
                 System.Console.WriteLine(tokenResponse.Error);
@@ -63,7 +57,7 @@ namespace ImageGallery.API.Client.Console
             var client = new HttpClient();
             client.SetBearerToken(tokenResponse.AccessToken);
 
-            var response = await client.GetAsync("https://proxy-nginx:8081/identity");
+            var response = await client.GetAsync($"https://imagegallery-api.informationcart.com/api/images");
             if (!response.IsSuccessStatusCode)
             {
                 System.Console.WriteLine(response.StatusCode);
