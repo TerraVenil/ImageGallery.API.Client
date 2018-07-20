@@ -1,0 +1,22 @@
+#!/bin/bash
+set -eo pipefail
+
+host="${DB_SERVER:-$(hostname --ip-address || echo '127.0.0.1')}"
+user=SA
+password=$SA_PASSWORD
+
+args=(
+        # force sqlserver to not use the local unix socket (test "external" connectivity)
+        -S $host
+        -U $user
+        -P $password
+        -d master
+        -Q "set nocount on; select count(*) from sys.objects"
+        -h -1
+
+)
+
+if select="$(sqlcmd "${args[@]}")" && [ $select > 1 ]; then
+	exit 0
+fi
+exit 1
