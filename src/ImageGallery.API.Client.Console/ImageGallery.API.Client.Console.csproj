@@ -25,10 +25,10 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.DockerSecrets" Version="2.0.0-preview1-final" />
     <PackageReference Include="IdentityModel" Version="3.8.0" />
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
-  </ItemGroup> 
+  </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Constants\Constants.csproj" />
+    <ProjectReference Include="..\ImageGallery.API.Client.Service\ImageGallery.API.Client.Service.csproj" />
   </ItemGroup>
 
 </Project>
