@@ -33,6 +33,7 @@ namespace ImageGallery.API.Client.Console
             var apisecret = (configuration["openIdConnectConfiguration:apisecret"]);
             var clientId = (configuration["openIdConnectConfiguration:clientId"]);
 
+            var api = (configuration["imagegallery-api:api"]);
             var imageGalleryApi = (configuration["imagegallery-api:uri"]);
             var login = (configuration["imagegallery-api:login"]);
             var password = (configuration["imagegallery-api:password"]);
@@ -50,7 +51,7 @@ namespace ImageGallery.API.Client.Console
 
             // request token
             var tokenClient = new TokenClient(disco.TokenEndpoint, clientId, apisecret);
-            var tokenResponse = await tokenClient.RequestResourceOwnerPasswordAsync(login, password, "imagegalleryapi");
+            var tokenResponse = await tokenClient.RequestResourceOwnerPasswordAsync(login, password, api);
 
             if (tokenResponse.IsError)
             {
@@ -70,7 +71,7 @@ namespace ImageGallery.API.Client.Console
             client.SetBearerToken(tokenResponse.AccessToken);
 
             var response = await client.GetAsync($"{imageGalleryApi}/api/images");
-            if (!response.IsSuccessStatusCode)
+             if (!response.IsSuccessStatusCode)
             {
                  System.Console.WriteLine(response.StatusCode);
             }
