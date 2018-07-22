@@ -4,10 +4,11 @@ using System.IO;
 using IdentityModel.Client;
 using System.Net.Http;
 using System.Threading.Tasks;
-using ImageGallery.API.Client.Console.Models;
+using ImageGallery.API.Client.Service.Helpers;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using ImageGallery.API.Client.Service.Models;
 
 namespace ImageGallery.API.Client.Console
 {
@@ -57,8 +58,12 @@ namespace ImageGallery.API.Client.Console
                 return 1;
             }
 
+
             System.Console.WriteLine(tokenResponse.Json);
             System.Console.WriteLine("\n\n");
+            tokenResponse.Show();
+              
+
 
             // call api
             var client = new HttpClient();
