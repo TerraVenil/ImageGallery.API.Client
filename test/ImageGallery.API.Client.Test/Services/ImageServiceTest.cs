@@ -1,0 +1,50 @@
+﻿using ImageGallery.API.Client.Service.Interface;
+using ImageGallery.API.Client.Test.Fixtures;
+using Xunit;
+using Xunit.Abstractions;
+
+namespace ImageGallery.API.Client.Test.Services
+{
+    public class ImageServiceTest  : IClassFixture<ImageServiceFixture>
+    {
+        private readonly IImageService _imageService;
+
+        private readonly ITestOutputHelper _output;
+        public ImageServiceTest(ImageServiceFixture fixture, ITestOutputHelper output)
+        {
+            _imageService = fixture.ImageService;
+            this._output = output;
+        }
+
+
+        [Theory]
+        [InlineData("2645bd94-3614-43fc-b21f-1209d730fc71")]
+        public void Can_Get_Image(string id)
+        {
+            var result = _imageService.GetImage(id);
+            Assert.True(false, "TODO");
+        }
+
+
+        [Fact]
+        public void Can_Get_Images()
+        {
+            var result = _imageService.GetImages();
+            Assert.True(false, "TODO");
+        }
+
+        [Fact]
+        public void Can_Update_Image()
+        {
+            Assert.True(false, "TODO");
+        }
+
+
+        [Fact]
+        public void Can_Create_Image()
+        {
+            Assert.True(false, "TODO");
+        }
+
+    }
+}

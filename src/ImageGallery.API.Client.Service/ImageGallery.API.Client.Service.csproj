@@ -8,9 +8,4 @@
     <PackageReference Include="IdentityModel" Version="3.8.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Interface\" />
-    <Folder Include="Service\" />
-  </ItemGroup>
-
 </Project>

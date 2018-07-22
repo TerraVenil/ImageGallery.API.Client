@@ -35,6 +35,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\ImageGallery.API.Client.Service\ImageGallery.API.Client.Service.csproj" />
     <ProjectReference Include="..\..\src\ImageGallery.FlickrService\ImageGallery.FlickrService.csproj" />
   </ItemGroup>
 
