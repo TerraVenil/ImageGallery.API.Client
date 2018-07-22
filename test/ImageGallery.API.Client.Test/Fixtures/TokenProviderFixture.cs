@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using ImageGallery.API.Client.Service.Configuration;
 using ImageGallery.API.Client.Service.Interface;
 using ImageGallery.API.Client.Service.Providers;
 using Microsoft.Extensions.Configuration;
@@ -18,12 +19,13 @@ namespace ImageGallery.API.Client.Test.Fixtures
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                 .AddJsonFile($"appsettings.{env}.json", optional: true)
-                .AddEnvironmentVariables()
-                .Build();
+                .AddEnvironmentVariables();
 
+            var config = builder.Build();
+            var openIdConfig = config.GetSection("openIdConnectConfiguration").Get<OpenIdConnectConfiguration>();
 
             var serviceProvider = new ServiceCollection()
-                .AddScoped<ITokenProvider, TokenProvider>()
+                .AddScoped<ITokenProvider>(c => new TokenProvider(openIdConfig))
                 .BuildServiceProvider();
 
             TokenProvider = serviceProvider.GetRequiredService<ITokenProvider>();
