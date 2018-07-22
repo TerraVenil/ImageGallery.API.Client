@@ -1,6 +1,8 @@
 ﻿using System.Threading.Tasks;
 using IdentityModel.Client;
+using ImageGallery.API.Client.Service.Configuration;
 using ImageGallery.API.Client.Service.Interface;
+using Microsoft.Extensions.Options;
 
 namespace ImageGallery.API.Client.Service.Providers
 {
@@ -14,10 +16,18 @@ namespace ImageGallery.API.Client.Service.Providers
 
         public string Api => "imagegalleryapi";
 
+        private ApplicationOptions _settings;
+
+        //public TokenProvider(IOptions<ApplicationOptions> settings)
+        //{
+        //    this._settings = settings.Value;
+        //}
+
         public TokenProvider()
         {
             
         }
+
         public async Task<TokenResponse> RequestResourceOwnerPasswordAsync(string userName, string password)
         {
             var disco = await DiscoveryClient.GetAsync(Auth);

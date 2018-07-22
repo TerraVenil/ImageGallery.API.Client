@@ -1,4 +1,4 @@
-﻿namespace ImageGallery.API.Client.Console.Configuration
+﻿namespace ImageGallery.API.Client.Service.Configuration
 {
     public class OpenIdConnectConfiguration
     {

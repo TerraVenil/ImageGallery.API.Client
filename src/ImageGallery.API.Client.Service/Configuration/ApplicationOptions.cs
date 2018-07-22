@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace ImageGallery.API.Client.Console.Configuration
+﻿namespace ImageGallery.API.Client.Service.Configuration
 {
     public class ApplicationOptions
     {
