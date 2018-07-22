@@ -1,4 +1,7 @@
-﻿using ImageGallery.API.Client.Service.Interface;
+﻿using System.IO;
+using ImageGallery.API.Client.Service.Helpers;
+using ImageGallery.API.Client.Service.Interface;
+using ImageGallery.API.Client.Service.Models;
 using ImageGallery.API.Client.Test.Fixtures;
 using Xunit;
 using Xunit.Abstractions;
@@ -10,9 +13,13 @@ namespace ImageGallery.API.Client.Test.Services
         private readonly IImageService _imageService;
 
         private readonly ITestOutputHelper _output;
+
+        private readonly string _photoDirectory;
         public ImageServiceTest(ImageServiceFixture fixture, ITestOutputHelper output)
         {
             _imageService = fixture.ImageService;
+            _photoDirectory = fixture.PhotoDirectory;
+
             this._output = output;
         }
 
@@ -40,9 +47,22 @@ namespace ImageGallery.API.Client.Test.Services
         }
 
 
-        [Fact]
-        public void Can_Create_Image()
+        [Theory]
+        [InlineData("7444320646_fbc51d1c60_z.jpg")]
+        public void Can_Create_Image(string imageFileName)
         {
+            var photoPath = Path.Combine(_photoDirectory, imageFileName);
+            var bytes = ImageHelper.ReadImageFile(photoPath);
+
+            var image = new ImageForCreation
+            {
+                Bytes = bytes,
+                Category = "Test",
+                Title = "Test"
+            };
+
+            _imageService.InsertImage(image);
+
             Assert.True(false, "TODO");
         }
 
