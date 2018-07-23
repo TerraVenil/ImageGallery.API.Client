@@ -2,6 +2,7 @@
 using IdentityModel.Client;
 using ImageGallery.API.Client.Service.Configuration;
 using ImageGallery.API.Client.Service.Interface;
+using Microsoft.Extensions.Options;
 
 namespace ImageGallery.API.Client.Service.Providers
 {
@@ -15,6 +16,13 @@ namespace ImageGallery.API.Client.Service.Providers
 
         public string Api => "imagegalleryapi";
 
+        private readonly OpenIdConnectConfiguration _config;
+
+        public TokenProvider(IOptions<OpenIdConnectConfiguration> config)
+        {
+            _config = config.Value;
+        }
+
         public TokenProvider(OpenIdConnectConfiguration configuration)
         {
             _auth = configuration.Authority;
@@ -22,7 +30,7 @@ namespace ImageGallery.API.Client.Service.Providers
             _clientId = configuration.ClientId;
         }
 
-        public async Task<TokenResponse> RequestResourceOwnerPasswordAsync(string userName, string password)
+        public async Task<TokenResponse> RequestResourceOwnerPasswordAsync(string userName, string password, string api)
         {
             var disco = await DiscoveryClient.GetAsync(_auth);
             if (disco.IsError)
@@ -32,7 +40,7 @@ namespace ImageGallery.API.Client.Service.Providers
             }
 
             var tokenClient = new TokenClient(disco.TokenEndpoint, _clientId, _apiSecret);
-            var tokenResponse = await tokenClient.RequestResourceOwnerPasswordAsync(userName, password, Api);
+            var tokenResponse = await tokenClient.RequestResourceOwnerPasswordAsync(userName, password, api);
             if (tokenResponse.IsError)
             {
                 System.Console.WriteLine(tokenResponse.Error);

@@ -17,10 +17,10 @@ namespace ImageGallery.API.Client.Test.Services
         }
 
         [Theory]
-        [InlineData("Frank","password")]
-        public async void Can_Get_User_Token(string userName, string password)
+        [InlineData("Frank","password", "imagegalleryapi")]
+        public async void Can_Get_User_Token(string userName, string password, string api)
         {
-            var result = await _tokenProvider.RequestResourceOwnerPasswordAsync(userName, password);
+            var result = await _tokenProvider.RequestResourceOwnerPasswordAsync(userName, password, api);
             Assert.NotEmpty(result.AccessToken);
         }
 
