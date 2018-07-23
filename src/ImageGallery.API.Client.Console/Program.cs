@@ -68,8 +68,7 @@ namespace ImageGallery.API.Client.Console
             var filePath = Path.GetFullPath(Path.Combine(appPath, photoPath));
             var fileName = Path.Combine(filePath, "7444320646_fbc51d1c60_z.jpg");
 
-            var pathExists = FileHelper.CheckFilePath(filePath);
-            if (!pathExists)
+            if (!File.Exists(fileName))
                 return null;
 
             using (var fileStream = new FileStream(fileName, FileMode.Open))
