@@ -66,11 +66,11 @@ namespace ImageGallery.API.Client.Console
             string appPath = Directory.GetCurrentDirectory();
             string photoPath = @"../../../../../data/photos";
             var filePath = Path.GetFullPath(Path.Combine(appPath, photoPath));
-            var fileName = Path.Combine(filePath, "7444320646_fbc51d1c60_z.jpg");
+            var fileName = Path.Combine(filePath, "9982986024_0d2a4f9b20_z.jpg");
 
-            // Placeholder for Docker Image
-            if (!File.Exists(fileName))
-                fileName = Path.Combine("data", "photos", "9982986024_0d2a4f9b20_z.jpg");
+            //// Placeholder for Docker Image
+            //if (!File.Exists(fileName))
+            //    fileName = Path.Combine("data", "photos", "25340114767_6ee4be93f6_z.jpg");
 
             using (var fileStream = new FileStream(fileName, FileMode.Open))
             using (var ms = new MemoryStream())
