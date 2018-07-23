@@ -5,7 +5,6 @@ namespace ImageGallery.API.Client.Service.Helpers
 {
     public static class ImageHelper
     {
-
         public static byte[] ReadImageFile(string imageLocation)
         {
             byte[] imageData = null;
