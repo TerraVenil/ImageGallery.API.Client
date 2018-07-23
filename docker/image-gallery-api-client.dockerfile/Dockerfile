@@ -12,7 +12,7 @@ COPY ImageGallery.API.Client.sln /app/ImageGallery.API.Client.sln
 COPY NuGet.config /app/NuGet.config
 
 
-COPY data/photos /app/data/photos
+COPY data/photos /data/photos
 
 
 WORKDIR /app
@@ -39,5 +39,6 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /publish
 COPY --from=build-env /publish .
+COPY --from=build-env /data/photos  /data/photos
 
 ENTRYPOINT ["/entrypoint.sh"]
