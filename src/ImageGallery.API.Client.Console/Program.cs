@@ -12,6 +12,7 @@ using ImageGallery.API.Client.Service.Providers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Navigator.Common.Helpers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -64,7 +65,12 @@ namespace ImageGallery.API.Client.Console
 
             string appPath = Directory.GetCurrentDirectory();
             string photoPath = @"../../../../../data/photos";
-            var fileName = Path.GetFullPath(Path.Combine(appPath, photoPath, "7444320646_fbc51d1c60_z.jpg"));
+            var filePath = Path.GetFullPath(Path.Combine(appPath, photoPath));
+            var fileName = Path.Combine(filePath, "7444320646_fbc51d1c60_z.jpg");
+
+            var pathExists = FileHelper.CheckFilePath(filePath);
+            if (!pathExists)
+                return null;
 
             using (var fileStream = new FileStream(fileName, FileMode.Open))
             using (var ms = new MemoryStream())
@@ -78,7 +84,8 @@ namespace ImageGallery.API.Client.Console
             using (var client = new HttpClient())
             {
                 client.SetBearerToken(token.AccessToken);
-                var response = await client.PostAsync($"{imageGalleryApi}/api/images",
+                var response = await client.PostAsync(
+                    $"{imageGalleryApi}/api/images",
                         new StringContent(serializedImageForCreation, System.Text.Encoding.Unicode, "application/json"))
                     .ConfigureAwait(false);
 
