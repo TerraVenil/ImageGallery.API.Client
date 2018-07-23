@@ -12,7 +12,6 @@ using ImageGallery.API.Client.Service.Providers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Navigator.Common.Helpers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -67,10 +66,6 @@ namespace ImageGallery.API.Client.Console
             string photoPath = @"../../../../../data/photos";
             var filePath = Path.GetFullPath(Path.Combine(appPath, photoPath));
             var fileName = Path.Combine(filePath, "9982986024_0d2a4f9b20_z.jpg");
-
-            //// Placeholder for Docker Image
-            //if (!File.Exists(fileName))
-            //    fileName = Path.Combine("data", "photos", "25340114767_6ee4be93f6_z.jpg");
 
             using (var fileStream = new FileStream(fileName, FileMode.Open))
             using (var ms = new MemoryStream())
