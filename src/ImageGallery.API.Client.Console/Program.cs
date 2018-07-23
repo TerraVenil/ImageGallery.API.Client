@@ -12,6 +12,7 @@ using Newtonsoft.Json.Linq;
 using ImageGallery.API.Client.Service.Models;
 using ImageGallery.API.Client.Service.Providers;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace ImageGallery.API.Client.Console
 {
@@ -68,6 +69,11 @@ namespace ImageGallery.API.Client.Console
 
         private static void ConfigureServices(IServiceCollection serviceCollection)
         {
+            serviceCollection.AddSingleton(new LoggerFactory()
+                .AddConsole()
+                .AddDebug());
+            serviceCollection.AddLogging();
+
             serviceCollection.AddOptions();
             serviceCollection.Configure<OpenIdConnectConfiguration>(Configuration.GetSection("openIdConnectConfiguration"));
 

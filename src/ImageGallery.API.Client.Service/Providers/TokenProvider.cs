@@ -3,6 +3,8 @@ using IdentityModel.Client;
 using ImageGallery.API.Client.Service.Configuration;
 using ImageGallery.API.Client.Service.Interface;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace ImageGallery.API.Client.Service.Providers
 {
@@ -18,9 +20,16 @@ namespace ImageGallery.API.Client.Service.Providers
 
         private readonly OpenIdConnectConfiguration _config;
 
-        public TokenProvider(IOptions<OpenIdConnectConfiguration> config)
+        private readonly ILogger<TokenProvider> _logger;
+        public TokenProvider(ILogger<TokenProvider> logger,
+            IOptions<OpenIdConnectConfiguration> config)
         {
             _config = config.Value;
+            _logger = logger;
+
+            _auth = _config.Authority;
+            _apiSecret = _config.ApiSecret;
+            _clientId = _config.ClientId;
         }
 
         public TokenProvider(OpenIdConnectConfiguration configuration)
@@ -32,6 +41,8 @@ namespace ImageGallery.API.Client.Service.Providers
 
         public async Task<TokenResponse> RequestResourceOwnerPasswordAsync(string userName, string password, string api)
         {
+            //_logger.LogInformation($"This is a console application for {api}");
+
             var disco = await DiscoveryClient.GetAsync(_auth);
             if (disco.IsError)
             {
