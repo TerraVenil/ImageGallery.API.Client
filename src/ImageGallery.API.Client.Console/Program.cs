@@ -23,9 +23,7 @@ namespace ImageGallery.API.Client.Console
         public static IConfiguration Configuration { get; } = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
-            .AddJsonFile(
-                $"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development"}.json",
-                optional: true)
+            .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development"}.json", optional: true)
             .Build();
 
         public static ITokenProvider TokenProvider { get; set; }
@@ -70,20 +68,10 @@ namespace ImageGallery.API.Client.Console
 
         private static void ConfigureServices(IServiceCollection serviceCollection)
         {
-            var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
-            System.Console.WriteLine("ENV:" + env);
-
-            var configuration = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-                .AddJsonFile($"appsettings.{env}.json", optional: true)
-                .AddEnvironmentVariables()
-                .Build();
-
             serviceCollection.AddOptions();
-            serviceCollection.Configure<OpenIdConnectConfiguration>(configuration.GetSection("openIdConnectConfiguration"));
+            serviceCollection.Configure<OpenIdConnectConfiguration>(Configuration.GetSection("openIdConnectConfiguration"));
 
-            var openIdConfig = configuration.GetSection("openIdConnectConfiguration").Get<OpenIdConnectConfiguration>();
+            var openIdConfig = Configuration.GetSection("openIdConnectConfiguration").Get<OpenIdConnectConfiguration>();
 
             var serviceProvider = new ServiceCollection()
                 .AddScoped<ITokenProvider>(c => new TokenProvider(openIdConfig))
