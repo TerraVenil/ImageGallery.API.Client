@@ -68,8 +68,9 @@ namespace ImageGallery.API.Client.Console
             var filePath = Path.GetFullPath(Path.Combine(appPath, photoPath));
             var fileName = Path.Combine(filePath, "7444320646_fbc51d1c60_z.jpg");
 
+            // Placeholder for Docker Image
             if (!File.Exists(fileName))
-                return null;
+                fileName = Path.Combine("data", "photos", "7444320646_fbc51d1c60_z.jpg");
 
             using (var fileStream = new FileStream(fileName, FileMode.Open))
             using (var ms = new MemoryStream())
