@@ -4,7 +4,6 @@ using ImageGallery.API.Client.Service.Configuration;
 using ImageGallery.API.Client.Service.Interface;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace ImageGallery.API.Client.Service.Providers
 {

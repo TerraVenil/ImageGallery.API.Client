@@ -7,17 +7,17 @@ using IdentityModel.Client;
 using ImageGallery.API.Client.Service.Configuration;
 using ImageGallery.API.Client.Service.Helpers;
 using ImageGallery.API.Client.Service.Interface;
-using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using ImageGallery.API.Client.Service.Models;
 using ImageGallery.API.Client.Service.Providers;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace ImageGallery.API.Client.Console
 {
-    class Program
+    public class Program
     {
         /// <summary>
         ///
@@ -38,10 +38,10 @@ namespace ImageGallery.API.Client.Console
             ConfigureServices(serviceCollection);
 
             IConfiguration configuration = Configuration;
-            var login = (configuration["imagegallery-api:login"]);
-            var password = (configuration["imagegallery-api:password"]);
-            var api = (configuration["imagegallery-api:api"]);
-            var imageGalleryApi = (configuration["imagegallery-api:uri"]);
+            var login = configuration["imagegallery-api:login"];
+            var password = configuration["imagegallery-api:password"];
+            var api = configuration["imagegallery-api:api"];
+            var imageGalleryApi = configuration["imagegallery-api:uri"];
 
             var token = await TokenProvider.RequestResourceOwnerPasswordAsync(login, password, api);
             token.Show();
@@ -49,12 +49,11 @@ namespace ImageGallery.API.Client.Console
             await GoPost(token, imageGalleryApi);
             await GoGet(token, imageGalleryApi);
 
-
             System.Console.ReadLine();
             return 0;
         }
 
-        static async Task<HttpResponseMessage> GoPost(TokenResponse token, string imageGalleryApi)
+        private static async Task<HttpResponseMessage> GoPost(TokenResponse token, string imageGalleryApi)
         {
             // create an ImageForCreation instance
             var imageForCreation = new ImageForCreation()
@@ -87,7 +86,7 @@ namespace ImageGallery.API.Client.Console
             }
         }
 
-        static async Task<string> GoGet(TokenResponse token, string imageGalleryApi)
+        private static async Task<string> GoGet(TokenResponse token, string imageGalleryApi)
         {
             // call api
             var client = new HttpClient();
@@ -130,4 +129,3 @@ namespace ImageGallery.API.Client.Console
         }
     }
 }
-
