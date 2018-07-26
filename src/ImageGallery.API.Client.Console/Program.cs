@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
@@ -9,6 +10,8 @@ using ImageGallery.API.Client.Service.Helpers;
 using ImageGallery.API.Client.Service.Interface;
 using ImageGallery.API.Client.Service.Models;
 using ImageGallery.API.Client.Service.Providers;
+using ImageGallery.API.Client.Service.Services;
+using ImageGallery.FlickrService;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -30,6 +33,10 @@ namespace ImageGallery.API.Client.Console
 
         public static ITokenProvider TokenProvider { get; set; }
 
+        public static IImageService ImageService { get; set; }
+
+        public static IImageSearchService ImageSearchService { get; set; }
+
         public static int Main(string[] args) => MainAsync().GetAwaiter().GetResult();
 
         private static async Task<int> MainAsync()
@@ -46,11 +53,35 @@ namespace ImageGallery.API.Client.Console
             var token = await TokenProvider.RequestResourceOwnerPasswordAsync(login, password, api);
             token.Show();
 
+            var images = ImageService.GetImages();
+            await GoPostList(images, token, imageGalleryApi);
             await GoPost(token, imageGalleryApi);
             await GoGet(token, imageGalleryApi);
 
+            //await ImageSearchService.GetImagesAsync();
+
+
             System.Console.ReadLine();
             return 0;
+        }
+
+        private static async Task<string> GoPostList(IEnumerable<ImageForCreation> images, TokenResponse token, string imageGalleryApi)
+        {
+            foreach (var image in images)
+            {
+                System.Console.WriteLine(image.ToString());
+                var serializedImageForCreation = JsonConvert.SerializeObject(image);
+                using (var client = new HttpClient())
+                {
+                    client.SetBearerToken(token.AccessToken);
+                    var response = await client.PostAsync(
+                            $"{imageGalleryApi}/api/images",
+                            new StringContent(serializedImageForCreation, System.Text.Encoding.Unicode, "application/json"))
+                        .ConfigureAwait(false);
+                }
+            }
+
+            return "Sucess";
         }
 
         private static async Task<HttpResponseMessage> GoPost(TokenResponse token, string imageGalleryApi)
@@ -122,12 +153,18 @@ namespace ImageGallery.API.Client.Console
             serviceCollection.Configure<OpenIdConnectConfiguration>(Configuration.GetSection("openIdConnectConfiguration"));
 
             var openIdConfig = Configuration.GetSection("openIdConnectConfiguration").Get<OpenIdConnectConfiguration>();
+            var flickrConfig = Configuration.GetSection("flickrConfiguration").Get<FlickrConfiguration>();
 
             var serviceProvider = new ServiceCollection()
-                .AddScoped<ITokenProvider>(c => new TokenProvider(openIdConfig))
-                .BuildServiceProvider();
+                .AddScoped<ITokenProvider>(_ => new TokenProvider(openIdConfig))
+                .AddScoped<ISearchService>(_ => new SearchService(flickrConfig.ApiKey, flickrConfig.Secret))
+                .AddScoped<IImageService, ImageService>()
+                .AddScoped<IImageSearchService, ImageSearchService>()
+               .BuildServiceProvider();
 
             TokenProvider = serviceProvider.GetRequiredService<ITokenProvider>();
+            ImageService = serviceProvider.GetRequiredService<IImageService>();
+            ImageSearchService = serviceProvider.GetRequiredService<IImageSearchService>();
         }
     }
 }

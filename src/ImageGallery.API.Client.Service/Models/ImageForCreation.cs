@@ -23,5 +23,11 @@ namespace ImageGallery.API.Client.Service.Models
         /// </summary>
         [Required]
         public byte[] Bytes { get; set; }
+
+        public override string ToString()
+        {
+            return $"Title:{Title}|Category:{Category}";
+        }
+
     }
 }

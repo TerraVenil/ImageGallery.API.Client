@@ -26,7 +26,7 @@ namespace ImageGallery.FlickrService
             var photos = new List<Photo>();
             var defaultPageSize = photoSearchOptions.PerPage != 0 ? photoSearchOptions.Page : DefaultPageSize;
             var total = _flickr.PhotosSearchAsync(photoSearchOptions).Result.Total;
-
+ 
             var pages = PagingUtil.CalculateNumberOfPages(total, defaultPageSize);
 
             for (int i = 1; i <= pages; i++)

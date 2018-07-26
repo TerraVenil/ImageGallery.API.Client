@@ -8,7 +8,7 @@ namespace ImageGallery.API.Client.Service.Interface
     {
         ImageModel GetImage(string id);
 
-        IEnumerable<ImageModel>  GetImages();
+        IEnumerable<ImageForCreation>  GetImages();
 
         void InsertImage(ImageForCreation value);
 
