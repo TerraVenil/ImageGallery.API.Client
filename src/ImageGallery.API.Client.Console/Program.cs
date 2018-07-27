@@ -53,13 +53,15 @@ namespace ImageGallery.API.Client.Console
             var token = await TokenProvider.RequestResourceOwnerPasswordAsync(login, password, api);
             token.Show();
 
+            // Sample 1 - Get Images from Local File System and Upload
             var images = ImageService.GetImages();
             await GoPostList(images, token, imageGalleryApi);
-            await GoPost(token, imageGalleryApi);
+
+            // Sample 2 - Get Images from Flickr and Upload
+            var imageList = await ImageSearchService.GetImagesAsync();
+            await GoPostList(imageList, token, imageGalleryApi);
+
             await GoGet(token, imageGalleryApi);
-
-            //await ImageSearchService.GetImagesAsync();
-
 
             System.Console.ReadLine();
             return 0;
