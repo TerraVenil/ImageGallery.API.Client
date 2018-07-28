@@ -1,10 +1,14 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using IdentityModel.Client;
+using ImageGallery.API.Client.Console.Classes;
 using ImageGallery.API.Client.Service.Configuration;
 using ImageGallery.API.Client.Service.Helpers;
 using ImageGallery.API.Client.Service.Interface;
@@ -38,7 +42,7 @@ namespace ImageGallery.API.Client.Console
         public static IImageSearchService ImageSearchService { get; set; }
 
         public static int Main(string[] args) => MainAsync().GetAwaiter().GetResult();
-
+       
         private static async Task<int> MainAsync()
         {
             var serviceCollection = new ServiceCollection();
@@ -49,42 +53,183 @@ namespace ImageGallery.API.Client.Console
             var password = configuration["imagegallery-api:password"];
             var api = configuration["imagegallery-api:api"];
             var imageGalleryApi = configuration["imagegallery-api:uri"];
+            TokenResponse token;
+            try
+            {
+                Metric.Start("token");
+                token = await TokenProvider.RequestResourceOwnerPasswordAsync(login, password, api);
+                token.Show();
+            }
+            finally
+            {
+                Metric.StopAndWriteConsole("token");
+            }
 
-            var token = await TokenProvider.RequestResourceOwnerPasswordAsync(login, password, api);
-            token.Show();
+            IEnumerable<ImageForCreation> images;
+     /*       try
+            {
+                Metric.Start("getlocalimg");
+                // Sample 1 - Get Images from Local File System and Upload
+                images = ImageService.GetImages();
+            }
+            finally
+            {
+                Metric.StopAndWriteConsole("getlocalimg");
+            }
 
-            // Sample 1 - Get Images from Local File System and Upload
-            var images = ImageService.GetImages();
-            await GoPostList(images, token, imageGalleryApi);
-
+            try
+            {
+                Metric.Start("postlocalimg");
+                await GoPostList(images, token, imageGalleryApi, 10, true);
+            }
+            finally
+            {
+                Metric.StopAndWriteConsole("postlocalimg");
+            }
+            */
+            IEnumerable<ImageForCreation> imageList;
             // Sample 2 - Get Images from Flickr and Upload
-            var imageList = await ImageSearchService.GetImagesAsync();
-            await GoPostList(imageList, token, imageGalleryApi);
+         /*   try
+            {
+                Metric.Start("OLD getflickrimg");
+                imageList = await ImageSearchService.GetImagesAsync();
+            }
+            finally
+            {
+                Metric.StopAndWriteConsole("OLD getflickrimg");
+            }
 
-            await GoGet(token, imageGalleryApi);
+            try
+            {
+                Metric.Start("OLD postflickrimg");
+                await GoPostList(imageList, token, imageGalleryApi, 10, true);
+            }
+            finally
+            {
+                Metric.StopAndWriteConsole("OLD postflickrimg");
+            }
+            */
+    
+
+            try
+            {
+                Metric.Start("NEW flickrimg");
+                //start processing
+                //waitForPostComplete is true by default, waiting when image has finished upload
+                //  if we don't need to wait (e.g. no afterward actions are needed) we can set it to false to speed up even more
+                await PerformGetAndPost(token, imageGalleryApi, 30, true);
+
+            }
+            finally
+            {
+                Metric.StopAndWriteConsole("NEW flickrimg");
+            }
+
+            try
+            {
+                Metric.Start("get");
+                await GoGet(token, imageGalleryApi);
+            }
+            finally
+            {
+                Metric.StopAndWriteConsole("get");
+            }
 
             System.Console.ReadLine();
             return 0;
         }
 
-        private static async Task<string> GoPostList(IEnumerable<ImageForCreation> images, TokenResponse token, string imageGalleryApi)
+        /// <summary>
+        /// Uses conveyor queue logic to process images as soon as they are available
+        /// </summary>
+        private static async Task<string> PerformGetAndPost(TokenResponse token, string imageGalleryApi, int threadCount, bool waitForPostComplete)
         {
-            foreach (var image in images)
+            var limit  = System.Net.ServicePointManager.DefaultConnectionLimit;
+            System.Net.ServicePointManager.DefaultConnectionLimit = threadCount * 2;
+            ThreadPool.SetMinThreads(threadCount * 2, 4); 
+            try
             {
-                System.Console.WriteLine(image.ToString());
-                var serializedImageForCreation = JsonConvert.SerializeObject(image);
+                //start search processing
+                ImageSearchService.StartImagesSearchQueue(threadCount);
+
+                int asyncCount = 0;
+
+                //use single client for all queries
                 using (var client = new HttpClient())
                 {
                     client.SetBearerToken(token.AccessToken);
+
+                    //do while image search is running, image queue is not empty or there are some async tasks left
+                    while (ImageSearchService.IsSearchRunning || !ImageSearchService.ImageForCreations.IsEmpty || asyncCount > 0)
+                    {
+                        //get image from queue
+                        if (!ImageSearchService.ImageForCreations.TryDequeue(out var image))
+                            continue;
+
+                        //wait for available threads
+                        while (asyncCount > threadCount) //http threads could stuck if there are too many. had to tweak this param
+                        {
+                            await Task.Delay(5);
+                        }
+
+                        asyncCount++;
+                        //run new processing thread
+                        ThreadPool.QueueUserWorkItem(state =>
+                        {
+                            try
+                            {
+                                GoPostImage(client, image, imageGalleryApi, waitForPostComplete).GetAwaiter().GetResult();
+                            }
+                            finally
+                            {
+                                asyncCount--;
+                            }
+                        });
+                    }
+                }
+
+                return "Sucess";
+            }
+            finally
+            {
+                System.Net.ServicePointManager.DefaultConnectionLimit = limit;
+            }
+        }
+
+        private static async Task<string> GoPostList(IEnumerable<ImageForCreation> images, TokenResponse token, string imageGalleryApi, int threadCount, bool waitForPostComplete)
+        {
+            System.Console.WriteLine($"Posting {images.Count()} images...");
+            using (var client = new HttpClient())
+            {
+                client.SetBearerToken(token.AccessToken);
+
+                await AsyncHelper.RunWithMaxDegreeOfConcurrency(threadCount, images, async image =>
+                {
+                    System.Console.WriteLine($"Posting {image.ToString()} ...");
+                    var serializedImageForCreation = JsonConvert.SerializeObject(image);
                     var response = await client.PostAsync(
                             $"{imageGalleryApi}/api/images",
                             new StringContent(serializedImageForCreation, System.Text.Encoding.Unicode, "application/json"))
-                        .ConfigureAwait(false);
-                }
-            }
+                        .ConfigureAwait(waitForPostComplete);
+                    System.Console.WriteLine($"{image.ToString()} post complete!");
 
+                });
+            }
             return "Sucess";
         }
+
+        private static async Task GoPostImage(HttpClient client, ImageForCreation image, string imageGalleryApi, bool waitForPostComplete)
+        {
+            System.Console.WriteLine($"Posting {image.ToString()} ...");
+            var serializedImageForCreation = JsonConvert.SerializeObject(image);
+            var response = await client.PostAsync(
+                    $"{imageGalleryApi}/api/images",
+                    new StringContent(serializedImageForCreation, System.Text.Encoding.Unicode, "application/json"))
+                .ConfigureAwait(waitForPostComplete);
+            if(waitForPostComplete)
+                System.Console.WriteLine($"{image.ToString()} post complete!");
+        }
+
 
         private static async Task<HttpResponseMessage> GoPost(TokenResponse token, string imageGalleryApi)
         {
@@ -146,27 +291,35 @@ namespace ImageGallery.API.Client.Console
 
         private static void ConfigureServices(IServiceCollection serviceCollection)
         {
-            serviceCollection.AddSingleton(new LoggerFactory()
-                .AddConsole()
-                .AddDebug());
-            serviceCollection.AddLogging();
+            try
+            {
+                Metric.Start("config");
+                serviceCollection.AddSingleton(new LoggerFactory()
+                    .AddConsole()
+                    .AddDebug());
+                serviceCollection.AddLogging();
 
-            serviceCollection.AddOptions();
-            serviceCollection.Configure<OpenIdConnectConfiguration>(Configuration.GetSection("openIdConnectConfiguration"));
+                serviceCollection.AddOptions();
+                serviceCollection.Configure<OpenIdConnectConfiguration>(Configuration.GetSection("openIdConnectConfiguration"));
 
-            var openIdConfig = Configuration.GetSection("openIdConnectConfiguration").Get<OpenIdConnectConfiguration>();
-            var flickrConfig = Configuration.GetSection("flickrConfiguration").Get<FlickrConfiguration>();
+                var openIdConfig = Configuration.GetSection("openIdConnectConfiguration").Get<OpenIdConnectConfiguration>();
+                var flickrConfig = Configuration.GetSection("flickrConfiguration").Get<FlickrConfiguration>();
 
-            var serviceProvider = new ServiceCollection()
-                .AddScoped<ITokenProvider>(_ => new TokenProvider(openIdConfig))
-                .AddScoped<ISearchService>(_ => new SearchService(flickrConfig.ApiKey, flickrConfig.Secret))
-                .AddScoped<IImageService, ImageService>()
-                .AddScoped<IImageSearchService, ImageSearchService>()
-               .BuildServiceProvider();
+                var serviceProvider = new ServiceCollection()
+                    .AddScoped<ITokenProvider>(_ => new TokenProvider(openIdConfig))
+                    .AddScoped<ISearchService>(_ => new SearchService(flickrConfig.ApiKey, flickrConfig.Secret))
+                    .AddScoped<IImageService, ImageService>()
+                    .AddScoped<IImageSearchService, ImageSearchService>()
+                    .BuildServiceProvider();
 
-            TokenProvider = serviceProvider.GetRequiredService<ITokenProvider>();
-            ImageService = serviceProvider.GetRequiredService<IImageService>();
-            ImageSearchService = serviceProvider.GetRequiredService<IImageSearchService>();
+                TokenProvider = serviceProvider.GetRequiredService<ITokenProvider>();
+                ImageService = serviceProvider.GetRequiredService<IImageService>();
+                ImageSearchService = serviceProvider.GetRequiredService<IImageSearchService>();
+            }
+            finally
+            {
+                Metric.StopAndWriteConsole("config");
+            }
         }
     }
 }
