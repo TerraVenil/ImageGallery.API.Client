@@ -9,11 +9,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImageGallery.API.Client.Con
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{7228B49A-AEC6-46AE-A4C5-A0706D5883C6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageGallery.API.Client.Test", "test\ImageGallery.API.Client.Test\ImageGallery.API.Client.Test.csproj", "{A8FBC6D8-3F22-4A08-BF57-1554386EC2D3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImageGallery.API.Client.Test", "test\ImageGallery.API.Client.Test\ImageGallery.API.Client.Test.csproj", "{A8FBC6D8-3F22-4A08-BF57-1554386EC2D3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageGallery.FlickrService", "src\ImageGallery.FlickrService\ImageGallery.FlickrService.csproj", "{4D0C5099-458E-461A-919A-F4D263726D2B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImageGallery.FlickrService", "src\ImageGallery.FlickrService\ImageGallery.FlickrService.csproj", "{4D0C5099-458E-461A-919A-F4D263726D2B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageGallery.API.Client.Service", "src\ImageGallery.API.Client.Service\ImageGallery.API.Client.Service.csproj", "{D50C75D4-0D0A-499F-850C-CC61C13DAAC7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImageGallery.API.Client.Service", "src\ImageGallery.API.Client.Service\ImageGallery.API.Client.Service.csproj", "{D50C75D4-0D0A-499F-850C-CC61C13DAAC7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
