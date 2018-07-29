@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -9,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using IdentityModel.Client;
 using ImageGallery.API.Client.Console.Classes;
+using ImageGallery.API.Client.Service.Classes;
 using ImageGallery.API.Client.Service.Configuration;
 using ImageGallery.API.Client.Service.Helpers;
 using ImageGallery.API.Client.Service.Interface;
@@ -42,7 +41,7 @@ namespace ImageGallery.API.Client.Console
         public static IImageSearchService ImageSearchService { get; set; }
 
         public static int Main(string[] args) => MainAsync().GetAwaiter().GetResult();
-       
+
         private static async Task<int> MainAsync()
         {
             var serviceCollection = new ServiceCollection();
@@ -53,6 +52,7 @@ namespace ImageGallery.API.Client.Console
             var password = configuration["imagegallery-api:password"];
             var api = configuration["imagegallery-api:api"];
             var imageGalleryApi = configuration["imagegallery-api:uri"];
+
             TokenResponse token;
             try
             {
@@ -65,60 +65,14 @@ namespace ImageGallery.API.Client.Console
                 Metric.StopAndWriteConsole("token");
             }
 
-            IEnumerable<ImageForCreation> images;
-     /*       try
-            {
-                Metric.Start("getlocalimg");
-                // Sample 1 - Get Images from Local File System and Upload
-                images = ImageService.GetImages();
-            }
-            finally
-            {
-                Metric.StopAndWriteConsole("getlocalimg");
-            }
 
             try
             {
-                Metric.Start("postlocalimg");
-                await GoPostList(images, token, imageGalleryApi, 10, true);
-            }
-            finally
-            {
-                Metric.StopAndWriteConsole("postlocalimg");
-            }
-            */
-            IEnumerable<ImageForCreation> imageList;
-            // Sample 2 - Get Images from Flickr and Upload
-         /*   try
-            {
-                Metric.Start("OLD getflickrimg");
-                imageList = await ImageSearchService.GetImagesAsync();
-            }
-            finally
-            {
-                Metric.StopAndWriteConsole("OLD getflickrimg");
-            }
-
-            try
-            {
-                Metric.Start("OLD postflickrimg");
-                await GoPostList(imageList, token, imageGalleryApi, 10, true);
-            }
-            finally
-            {
-                Metric.StopAndWriteConsole("OLD postflickrimg");
-            }
-            */
-    
-
-            try
-            {
-                Metric.Start("NEW flickrimg");
-                //start processing
-                //waitForPostComplete is true by default, waiting when image has finished upload
+                Metric.Start("Flickr Search and Post");
+                // start processing
+                // waitForPostComplete is true by default, waiting when image has finished upload
                 //  if we don't need to wait (e.g. no afterward actions are needed) we can set it to false to speed up even more
                 await PerformGetAndPost(token, imageGalleryApi, 30, true);
-
             }
             finally
             {
@@ -142,32 +96,42 @@ namespace ImageGallery.API.Client.Console
         /// <summary>
         /// Uses conveyor queue logic to process images as soon as they are available
         /// </summary>
+        /// <returns>
+        ///  A <see cref="Task"/> representing the asynchronous operation.
+        /// </returns>
         private static async Task<string> PerformGetAndPost(TokenResponse token, string imageGalleryApi, int threadCount, bool waitForPostComplete)
         {
-            var limit  = System.Net.ServicePointManager.DefaultConnectionLimit;
+            var limit = System.Net.ServicePointManager.DefaultConnectionLimit;
             System.Net.ServicePointManager.DefaultConnectionLimit = threadCount * 2;
-            ThreadPool.SetMinThreads(threadCount * 2, 4); 
+            ThreadPool.SetMinThreads(threadCount * 2, 4);
+
+            var searchOptions = new SearchOptions
+            {
+                PhotoSize = "z",
+                MachineTags = "machine_tags => nycparks:",
+            };
+
             try
             {
-                //start search processing
-                ImageSearchService.StartImagesSearchQueue(threadCount);
+                // start search processing
+                ImageSearchService.StartImagesSearchQueue(searchOptions, threadCount);
 
                 int asyncCount = 0;
 
-                //use single client for all queries
+                // use single client for all queries
                 using (var client = new HttpClient())
                 {
                     client.SetBearerToken(token.AccessToken);
 
-                    //do while image search is running, image queue is not empty or there are some async tasks left
+                    // do while image search is running, image queue is not empty or there are some async tasks left
                     while (ImageSearchService.IsSearchRunning || !ImageSearchService.ImageForCreations.IsEmpty || asyncCount > 0)
                     {
-                        //get image from queue
+                        // get image from queue
                         if (!ImageSearchService.ImageForCreations.TryDequeue(out var image))
                             continue;
 
-                        //wait for available threads
-                        while (asyncCount > threadCount) //http threads could stuck if there are too many. had to tweak this param
+                        // wait for available threads
+                        while (asyncCount > threadCount) // http threads could stuck if there are too many. had to tweak this param
                         {
                             await Task.Delay(5);
                         }

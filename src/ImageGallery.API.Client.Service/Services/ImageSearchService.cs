@@ -1,16 +1,16 @@
-﻿using System;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using FlickrNet;
+using ImageGallery.API.Client.Service.Classes;
 using ImageGallery.API.Client.Service.Interface;
 using ImageGallery.API.Client.Service.Models;
 using ImageGallery.FlickrService;
+using ImageGallery.FlickrService.Helpers;
 
 namespace ImageGallery.API.Client.Service.Services
 {
@@ -74,7 +74,7 @@ namespace ImageGallery.API.Client.Service.Services
         private volatile int _asynCounter;
         private volatile bool _isSearchRunning;
 
-        public void StartImagesSearchQueue(int maxThreads)
+        public void StartImagesSearchQueue(SearchOptions options, int maxThreads)
         {
             if(_isSearchRunning) return;
             _isSearchRunning = true;
@@ -88,7 +88,8 @@ namespace ImageGallery.API.Client.Service.Services
 
                     var photoSearchOptions = new PhotoSearchOptions
                     {
-                        MachineTags = "machine_tags => nychalloffame:",
+                        UserId = !string.IsNullOrEmpty(options.UserId) ? options.UserId : null,
+                        MachineTags = !string.IsNullOrEmpty(options.MachineTags) ? options.MachineTags : null,
                         Extras = PhotoSearchExtras.All,
                     };
 
@@ -112,7 +113,7 @@ namespace ImageGallery.API.Client.Service.Services
                         {
                             try
                             {
-                                PrepareImage(photo);
+                                PrepareImage(photo, options.PhotoSize);
                             }
                             finally
                             {
@@ -130,7 +131,7 @@ namespace ImageGallery.API.Client.Service.Services
             });
         }
 
-        private void PrepareImage(Photo photo)
+        private void PrepareImage(Photo photo, string size)
         {
             var image = new ImageForCreation
             {
@@ -138,8 +139,9 @@ namespace ImageGallery.API.Client.Service.Services
                 Category = "Test",
             };
 
-            var photoUrl = photo.Medium640Url;
+            var photoUrl = photo.GetPhotoUrl(size);
             var request = (HttpWebRequest)WebRequest.Create(photoUrl);
+
             using (var response = (HttpWebResponse) request.GetResponse())
             {
                 using (var inputStream = response.GetResponseStream())
@@ -154,6 +156,7 @@ namespace ImageGallery.API.Client.Service.Services
                 ImageForCreations.Enqueue(image);
             }
         }
+
 
     }
 }

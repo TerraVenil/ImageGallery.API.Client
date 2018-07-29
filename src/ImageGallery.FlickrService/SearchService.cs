@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Threading.Tasks;
 using FlickrNet;
 using ImageGallery.FlickrService.Helpers;
@@ -44,6 +42,7 @@ namespace ImageGallery.FlickrService
         }
 
         public ConcurrentQueue<Photo> PhotosQueue { get; } = new ConcurrentQueue<Photo>();
+
         public bool IsSearchQueueRunning { get; private set; }
 
         public async Task StartPhotosSearchQueueAsync(PhotoSearchOptions photoSearchOptions)

@@ -1,5 +1,4 @@
-﻿using System;
-using FlickrNet;
+﻿using FlickrNet;
 using ImageGallery.API.Client.Test.Fixtures;
 using ImageGallery.FlickrService;
 using Xunit;
@@ -11,13 +10,13 @@ namespace ImageGallery.API.Client.Test.Flickr
     {
         private readonly FlickrNet.Flickr _flickr;
 
-        private readonly ISearchService searchService; 
+        private readonly ISearchService _searchService; 
 
         private readonly ITestOutputHelper _output;
         public SearchServiceTest(FlickrFixture fixture, ITestOutputHelper output)
         {
             this._flickr = fixture.Flickr;
-            this.searchService = fixture.SearchService;
+            this._searchService = fixture.SearchService;
             this._output = output;
         }
 
@@ -25,7 +24,7 @@ namespace ImageGallery.API.Client.Test.Flickr
         [InlineData("9250911801")]
         public async void Can_Get_Photo_Info(string photoId)
         {
-            var photoInfo = await searchService.GetPhotoInfoAsync(photoId);
+            var photoInfo = await _searchService.GetPhotoInfoAsync(photoId);
             foreach (var tag in photoInfo.Tags)
             {
                 _output.WriteLine($"IsMachineTag{tag.IsMachineTag}");
@@ -44,7 +43,7 @@ namespace ImageGallery.API.Client.Test.Flickr
                 Extras = PhotoSearchExtras.All,
             };
 
-            var photoCollection = await searchService.SearchPhotosAsync(photoSearchOptions);
+            var photoCollection = await _searchService.SearchPhotosAsync(photoSearchOptions);
             Assert.NotNull(photoCollection);
         }
 
