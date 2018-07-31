@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace ImageGallery.FlickrService.Helpers
+﻿namespace ImageGallery.FlickrService.Helpers
 {
     public static class PagingUtil
     {
@@ -11,8 +7,7 @@ namespace ImageGallery.FlickrService.Helpers
             var result = totalNumberOfItems % pageSize;
             if (result == 0)
                 return totalNumberOfItems / pageSize;
-            else
-                return totalNumberOfItems / pageSize + 1;
+            return totalNumberOfItems / pageSize + 1;
         }
     }
 }

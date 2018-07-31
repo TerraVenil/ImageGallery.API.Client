@@ -12,7 +12,7 @@ namespace ImageGallery.API.Client.Console.Classes
         {
             if (!Entities.ContainsKey(name))
                 Entities.TryAdd(name, new MetricEntity());
-            Entities[name].Start();            
+            Entities[name].Start();
         }
 
         public static string Stop(string name)
@@ -33,7 +33,6 @@ namespace ImageGallery.API.Client.Console.Classes
             }
         }
 
-
         public static void StopAndWriteConsole(string name)
         {
             var old = System.Console.ForegroundColor;
@@ -45,6 +44,7 @@ namespace ImageGallery.API.Client.Console.Classes
         private class MetricEntity
         {
             public bool IsRunning => Watch.IsRunning;
+
             private Stopwatch Watch { get; } = new Stopwatch();
 
             public void Start()
@@ -62,7 +62,5 @@ namespace ImageGallery.API.Client.Console.Classes
                 return Watch.Elapsed;
             }
         }
-
     }
-
 }

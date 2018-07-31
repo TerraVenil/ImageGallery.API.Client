@@ -20,6 +20,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Serilog;
 
 namespace ImageGallery.API.Client.Console
 {
@@ -96,10 +97,14 @@ namespace ImageGallery.API.Client.Console
         /// <summary>
         /// Uses conveyor queue logic to process images as soon as they are available
         /// </summary>
+        /// <param name="token">Token</param>
+        /// <param name="apiUri">ImageGallery Api Uri</param>
+        /// <param name="threadCount"></param>
+        /// <param name="waitForPostComplete"></param>
         /// <returns>
         ///  A <see cref="Task"/> representing the asynchronous operation.
         /// </returns>
-        private static async Task<string> PerformGetAndPost(TokenResponse token, string imageGalleryApi, int threadCount, bool waitForPostComplete)
+        private static async Task<string> PerformGetAndPost(TokenResponse token, string apiUri, int threadCount, bool waitForPostComplete)
         {
             var limit = System.Net.ServicePointManager.DefaultConnectionLimit;
             System.Net.ServicePointManager.DefaultConnectionLimit = threadCount * 2;
@@ -142,7 +147,7 @@ namespace ImageGallery.API.Client.Console
                         {
                             try
                             {
-                                GoPostImage(client, image, imageGalleryApi, waitForPostComplete).GetAwaiter().GetResult();
+                               var status = GoPostImage(client, image, apiUri, waitForPostComplete).GetAwaiter().GetResult();
                             }
                             finally
                             {
@@ -152,6 +157,7 @@ namespace ImageGallery.API.Client.Console
                     }
                 }
 
+                // Return Status Code
                 return "Sucess";
             }
             finally
@@ -182,18 +188,24 @@ namespace ImageGallery.API.Client.Console
             return "Sucess";
         }
 
-        private static async Task GoPostImage(HttpClient client, ImageForCreation image, string imageGalleryApi, bool waitForPostComplete)
+        private static async Task<HttpResponseMessage> GoPostImage(HttpClient client, ImageForCreation image, string apiUri, bool waitForPostComplete)
         {
-            System.Console.WriteLine($"Posting {image.ToString()} ...");
+            Log.Information("ImageGalleryAPI Post {@Image}", image.ToString());
+
+            // TODO - Add Errors to be Handled
             var serializedImageForCreation = JsonConvert.SerializeObject(image);
+
             var response = await client.PostAsync(
-                    $"{imageGalleryApi}/api/images",
+                    $"{apiUri}/api/images",
                     new StringContent(serializedImageForCreation, System.Text.Encoding.Unicode, "application/json"))
                 .ConfigureAwait(waitForPostComplete);
-            if(waitForPostComplete)
-                System.Console.WriteLine($"{image.ToString()} post complete!");
-        }
 
+            // TODO - Log Transaction Time/Sucess Message
+            if (waitForPostComplete)
+                Log.Information("{@Status} Post Complete {@Image}", response.StatusCode, image.ToString());
+
+            return response;
+        }
 
         private static async Task<HttpResponseMessage> GoPost(TokenResponse token, string imageGalleryApi)
         {
@@ -257,6 +269,13 @@ namespace ImageGallery.API.Client.Console
         {
             try
             {
+                var log = new LoggerConfiguration()
+                    .WriteTo.ColoredConsole()
+                    .CreateLogger();
+
+                Log.Logger = log;
+                Log.Information("The global logger has been configured");
+
                 Metric.Start("config");
                 serviceCollection.AddSingleton(new LoggerFactory()
                     .AddConsole()
