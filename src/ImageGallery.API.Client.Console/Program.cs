@@ -148,6 +148,10 @@ namespace ImageGallery.API.Client.Console
                             try
                             {
                                var status = GoPostImage(client, image, apiUri, waitForPostComplete).GetAwaiter().GetResult();
+                               if (!status.IsSuccessStatusCode)
+                               {
+                                   Log.Error($"{status.StatusCode.ToString()}");
+                               }
                             }
                             finally
                             {
