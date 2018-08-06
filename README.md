@@ -5,7 +5,7 @@
 
  Jenkins | Status  
 ------------ | -------------
-Build Image (Auth) | [![Build Status](https://jenkins.navigatorglass.com/buildStatus/icon?job=ImageGallery-API/ImageGallery-API-Client)](https://jenkins.navigatorglass.com/job/ImageGallery-API/job/ImageGallery-API-Client/)
+Build Image | [![Build Status](https://jenkins.navigatorglass.com/buildStatus/icon?job=ImageGallery-API/ImageGallery-API-Client)](https://jenkins.navigatorglass.com/job/ImageGallery-API/job/ImageGallery-API-Client/)
 
 
 https://github.com/IdentityServer/IdentityServer4.Samples
