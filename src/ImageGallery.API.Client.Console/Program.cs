@@ -66,7 +66,6 @@ namespace ImageGallery.API.Client.Console
                 Metric.StopAndWriteConsole("token");
             }
 
-
             try
             {
                 Metric.Start("Flickr Search and Post");
@@ -83,7 +82,7 @@ namespace ImageGallery.API.Client.Console
             try
             {
                 Metric.Start("get");
-                await GoGet(token, imageGalleryApi);
+                await GoGetImageGalleryApi(token, imageGalleryApi);
             }
             finally
             {
@@ -147,7 +146,7 @@ namespace ImageGallery.API.Client.Console
                         {
                             try
                             {
-                               var status = GoPostImage(client, image, apiUri, waitForPostComplete).GetAwaiter().GetResult();
+                               var status = GoPostImageGalleryApi(client, image, apiUri, waitForPostComplete).GetAwaiter().GetResult();
                                if (!status.IsSuccessStatusCode)
                                {
                                    Log.Error($"{status.StatusCode.ToString()}");
@@ -170,29 +169,15 @@ namespace ImageGallery.API.Client.Console
             }
         }
 
-        private static async Task<string> GoPostList(IEnumerable<ImageForCreation> images, TokenResponse token, string imageGalleryApi, int threadCount, bool waitForPostComplete)
-        {
-            System.Console.WriteLine($"Posting {images.Count()} images...");
-            using (var client = new HttpClient())
-            {
-                client.SetBearerToken(token.AccessToken);
-
-                await AsyncHelper.RunWithMaxDegreeOfConcurrency(threadCount, images, async image =>
-                {
-                    System.Console.WriteLine($"Posting {image.ToString()} ...");
-                    var serializedImageForCreation = JsonConvert.SerializeObject(image);
-                    var response = await client.PostAsync(
-                            $"{imageGalleryApi}/api/images",
-                            new StringContent(serializedImageForCreation, System.Text.Encoding.Unicode, "application/json"))
-                        .ConfigureAwait(waitForPostComplete);
-                    System.Console.WriteLine($"{image.ToString()} post complete!");
-
-                });
-            }
-            return "Sucess";
-        }
-
-        private static async Task<HttpResponseMessage> GoPostImage(HttpClient client, ImageForCreation image, string apiUri, bool waitForPostComplete)
+        /// <summary>
+        ///  Image Gallery API - Post Message
+        /// </summary>
+        /// <param name="client"></param>
+        /// <param name="image"></param>
+        /// <param name="apiUri"></param>
+        /// <param name="waitForPostComplete"></param>
+        /// <returns></returns>
+        private static async Task<HttpResponseMessage> GoPostImageGalleryApi(HttpClient client, ImageForCreation image, string apiUri, bool waitForPostComplete)
         {
             Log.Information("ImageGalleryAPI Post {@Image}", image.ToString());
 
@@ -211,42 +196,13 @@ namespace ImageGallery.API.Client.Console
             return response;
         }
 
-        private static async Task<HttpResponseMessage> GoPost(TokenResponse token, string imageGalleryApi)
-        {
-            // create an ImageForCreation instance
-            var imageForCreation = new ImageForCreation()
-            {
-                Title = "Test Title",
-                Category = "Test Category",
-            };
-
-            string appPath = Directory.GetCurrentDirectory();
-            string photoPath = @"../../../../../data/photos";
-            var filePath = Path.GetFullPath(Path.Combine(appPath, photoPath));
-            var fileName = Path.Combine(filePath, "9982986024_0d2a4f9b20_z.jpg");
-
-            using (var fileStream = new FileStream(fileName, FileMode.Open))
-            using (var ms = new MemoryStream())
-            {
-                fileStream.CopyTo(ms);
-                imageForCreation.Bytes = ms.ToArray();
-            }
-
-            var serializedImageForCreation = JsonConvert.SerializeObject(imageForCreation);
-
-            using (var client = new HttpClient())
-            {
-                client.SetBearerToken(token.AccessToken);
-                var response = await client.PostAsync(
-                    $"{imageGalleryApi}/api/images",
-                        new StringContent(serializedImageForCreation, System.Text.Encoding.Unicode, "application/json"))
-                    .ConfigureAwait(false);
-
-                return response;
-            }
-        }
-
-        private static async Task<string> GoGet(TokenResponse token, string imageGalleryApi)
+        /// <summary>
+        /// Image Gallery API - Get Images
+        /// </summary>
+        /// <param name="token"></param>
+        /// <param name="imageGalleryApi"></param>
+        /// <returns></returns>
+        private static async Task<string> GoGetImageGalleryApi(TokenResponse token, string imageGalleryApi)
         {
             // call api
             var client = new HttpClient();

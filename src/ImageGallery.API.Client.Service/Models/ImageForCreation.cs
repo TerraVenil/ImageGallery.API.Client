@@ -19,6 +19,16 @@ namespace ImageGallery.API.Client.Service.Models
         public string Category { get; set; }
 
         /// <summary>
+        /// 
+        /// </summary>
+        public long? PhotoId { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string DataSource { get; set; }
+
+        /// <summary>
         ///
         /// </summary>
         [Required]

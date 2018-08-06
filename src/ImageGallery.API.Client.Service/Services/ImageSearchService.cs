@@ -137,6 +137,8 @@ namespace ImageGallery.API.Client.Service.Services
             {
                 Title = photo.Title,
                 Category = "Test",
+                PhotoId = long.Parse(photo.PhotoId),
+                DataSource = "Flickr"
             };
 
             var photoUrl = photo.GetPhotoUrl(size);
