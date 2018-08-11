@@ -36,7 +36,7 @@ namespace ImageGallery.API.Client.Service.Models
 
         public override string ToString()
         {
-            return $"Title:{Title}|Category:{Category}";
+            return $"PhotoId:{PhotoId}|Title:{Title}";
         }
 
     }

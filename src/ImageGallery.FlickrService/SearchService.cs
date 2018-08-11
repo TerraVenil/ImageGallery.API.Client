@@ -4,6 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using FlickrNet;
 using ImageGallery.FlickrService.Helpers;
+using Microsoft.Extensions.Logging;
+using Serilog;
 
 namespace ImageGallery.FlickrService
 {
@@ -12,6 +14,7 @@ namespace ImageGallery.FlickrService
         private readonly Flickr _flickr;
 
         private const int DefaultPageSize = 50;
+
         public SearchService(string apiKey, string secret)
         {
             this._flickr = new Flickr(apiKey, secret);
@@ -74,7 +77,9 @@ namespace ImageGallery.FlickrService
                     var photoCollection = await _flickr.PhotosSearchAsync(o);
                     foreach (var photo in photoCollection)
                     {
+                        
                         PhotosQueue.Enqueue(photo);
+                        Log.Information("{@Page} Flickr Enqueue Image Metadata Complete {@Photo}", photoCollection.Page, photo.ToString());
                     }
                 });
             }

@@ -11,6 +11,9 @@ using ImageGallery.API.Client.Service.Interface;
 using ImageGallery.API.Client.Service.Models;
 using ImageGallery.FlickrService;
 using ImageGallery.FlickrService.Helpers;
+using Microsoft.Extensions.Logging;
+using Serilog;
+
 
 namespace ImageGallery.API.Client.Service.Services
 {
@@ -18,9 +21,12 @@ namespace ImageGallery.API.Client.Service.Services
     {
         private readonly ISearchService _searchService;
 
-        public ImageSearchService(ISearchService searchService)
+        private readonly Microsoft.Extensions.Logging.ILogger _logger;
+
+        public ImageSearchService(ISearchService searchService, ILogger<ImageSearchService> logger)
         {
             this._searchService = searchService;
+            this._logger = logger;
         }
 
         public async Task<IEnumerable<ImageForCreation>> GetImagesAsync(int maxImagesCount = 0)
@@ -143,11 +149,11 @@ namespace ImageGallery.API.Client.Service.Services
 
             var photoUrl = photo.GetPhotoUrl(size);
             var request = (HttpWebRequest)WebRequest.Create(photoUrl);
-
             using (var response = (HttpWebResponse) request.GetResponse())
             {
                 using (var inputStream = response.GetResponseStream())
                 {
+                    Log.Information("{@Status} Flickr Get Image Complete {@Image}", response.StatusCode, image.ToString());
                     using (var ms = new MemoryStream())
                     {
                         inputStream.CopyTo(ms);

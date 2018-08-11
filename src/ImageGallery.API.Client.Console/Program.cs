@@ -82,7 +82,7 @@ namespace ImageGallery.API.Client.Console
             try
             {
                 Metric.Start("get");
-                await GoGetImageGalleryApi(token, imageGalleryApi);
+                await GetImageGalleryApi(token, imageGalleryApi);
             }
             finally
             {
@@ -146,7 +146,7 @@ namespace ImageGallery.API.Client.Console
                         {
                             try
                             {
-                               var status = GoPostImageGalleryApi(client, image, apiUri, waitForPostComplete).GetAwaiter().GetResult();
+                               var status = PostImageGalleryApi(client, image, apiUri, waitForPostComplete).GetAwaiter().GetResult();
                                if (!status.IsSuccessStatusCode)
                                {
                                    Log.Error($"{status.StatusCode.ToString()}");
@@ -177,9 +177,9 @@ namespace ImageGallery.API.Client.Console
         /// <param name="apiUri"></param>
         /// <param name="waitForPostComplete"></param>
         /// <returns></returns>
-        private static async Task<HttpResponseMessage> GoPostImageGalleryApi(HttpClient client, ImageForCreation image, string apiUri, bool waitForPostComplete)
+        private static async Task<HttpResponseMessage> PostImageGalleryApi(HttpClient client, ImageForCreation image, string apiUri, bool waitForPostComplete)
         {
-            Log.Information("ImageGalleryAPI Post {@Image}", image.ToString());
+            Log.Verbose("ImageGalleryAPI Post {@Image}", image.ToString());
 
             // TODO - Add Errors to be Handled
             var serializedImageForCreation = JsonConvert.SerializeObject(image);
@@ -191,7 +191,7 @@ namespace ImageGallery.API.Client.Console
 
             // TODO - Log Transaction Time/Sucess Message
             if (waitForPostComplete)
-                Log.Information("{@Status} Post Complete {@Image}", response.StatusCode, image.ToString());
+                Log.Information("{@Status} ImageGalleryAPI Post Complete {@Image}", response.StatusCode, image.ToString());
 
             return response;
         }
@@ -202,7 +202,7 @@ namespace ImageGallery.API.Client.Console
         /// <param name="token"></param>
         /// <param name="imageGalleryApi"></param>
         /// <returns></returns>
-        private static async Task<string> GoGetImageGalleryApi(TokenResponse token, string imageGalleryApi)
+        private static async Task<string> GetImageGalleryApi(TokenResponse token, string imageGalleryApi)
         {
             // call api
             var client = new HttpClient();
@@ -253,6 +253,7 @@ namespace ImageGallery.API.Client.Console
                     .AddScoped<ISearchService>(_ => new SearchService(flickrConfig.ApiKey, flickrConfig.Secret))
                     .AddScoped<IImageService, ImageService>()
                     .AddScoped<IImageSearchService, ImageSearchService>()
+                    .AddLogging()
                     .BuildServiceProvider();
 
                 TokenProvider = serviceProvider.GetRequiredService<ITokenProvider>();
