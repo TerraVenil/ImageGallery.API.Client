@@ -15,6 +15,5 @@ namespace ImageGallery.FlickrService.Helpers
             string url = $"https://farm{photo.Farm}.staticflickr.com/{photo.Server}/{photo.PhotoId}_{photo.Secret}_{size}.jpg";
             return url;
         }
-
     }
 }
