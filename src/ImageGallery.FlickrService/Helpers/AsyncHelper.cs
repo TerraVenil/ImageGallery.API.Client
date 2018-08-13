@@ -19,13 +19,13 @@ namespace ImageGallery.FlickrService.Helpers
                 if (activeTasks.Count == maxDegreeOfConcurrency)
                 {
                     await Task.WhenAny(activeTasks.ToArray());
-                    //observe exceptions here
+                    // observe exceptions here
                     activeTasks.RemoveAll(t => t.IsCompleted); 
                 }
             }
             await Task.WhenAll(activeTasks.ToArray()).ContinueWith(t => 
             {
-                //observe exceptions in a manner consistent with the above   
+                // observe exceptions in a manner consistent with the above   
             });
         }
 
