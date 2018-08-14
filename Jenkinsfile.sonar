@@ -1,0 +1,16 @@
+node('master') {
+
+    stage('Git checkout') {
+        git branch: 'master', credentialsId: 'gihub-key', url: 'git@github.com:stuartshay/ImageGallery.API.Client'
+    }
+
+
+    stage('Sonar Scanning') {
+       sh 'docker run --name dotnet-scanner --tty --rm  --volume  $(pwd):/project stuartshay/sonarqube:dotnet-2.1-sdk -e PROJECT_KEY=ImageGallery.API.Client'
+    }
+  
+   stage('Mail') {
+        emailext attachLog: true, body: '', subject: "Jenkins build status - ${currentBuild.fullDisplayName}", to: 'sshay@yahoo.com'
+    }
+
+}
