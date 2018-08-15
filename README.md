@@ -4,9 +4,14 @@
 
 
 [![SonarCloud](http://sonar.navigatorglass.com:9000/api/project_badges/measure?project=ImageGallery.API.Client&metric=reliability_rating)](http://sonar.navigatorglass.com:9000/dashboard?id=ImageGallery.API.Client)
-[![SonarCloud](http://sonar.navigatorglass.com:9000/api/project_badges/measure?project=ImageGallery.API.Client&metric=security_rating)](http://sonar.navigatorglass.com:9000/dashboard?id=ImageGallery.API.Client)
-[![SonarCloud](http://sonar.navigatorglass.com:9000/api/project_badges/measure?project=ImageGallery.API.Client&metric=sqale_rating)](http://sonar.navigatorglass.com:9000/dashboard?id=ImageGallery.API.Client)
+[![SonarCloud](http://sonar.navigatorglass.com:9000/api/project_badges/measure?project=ImageGalleryAPIClient&metric=security_rating)](http://sonar.navigatorglass.com:9000/dashboard?id=ImageGalleryAPIClient)
 
+
+
+
+[![SonarCloud](http://sonar.navigatorglass.com:9000/api/project_badges/measure?project=ImageGalleryAPIClient
+&metric=sqale_rating)](http://sonar.navigatorglass.com:9000/dashboard?id=ImageGalleryAPIClient)
+[![SonarCloud](http://sonar.navigatorglass.com:9000/api/project_badges/measure?project=ImageGalleryAPIClient&metric=alert_status)](http://sonar.navigatorglass.com:9000/dashboard?id=ImageGalleryAPIClient)
 
 
  Jenkins | Status  
