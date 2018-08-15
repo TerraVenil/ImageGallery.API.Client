@@ -22,7 +22,7 @@ namespace ImageGallery.FlickrService
 
         public async Task<PhotoInfo> GetPhotoInfoAsync(string photoId)
         {
-            var photoInfo = await _flickr.PhotosGetInfoAsync(photoId);  
+            var photoInfo = await _flickr.PhotosGetInfoAsync(photoId);
             return photoInfo;
         }
 
@@ -31,7 +31,7 @@ namespace ImageGallery.FlickrService
             var photos = new List<Photo>();
             var defaultPageSize = photoSearchOptions.PerPage != 0 ? photoSearchOptions.Page : DefaultPageSize;
             var total = _flickr.PhotosSearchAsync(photoSearchOptions).Result.Total;
- 
+
             var pages = PagingUtil.CalculateNumberOfPages(total, defaultPageSize);
 
             for (int i = 1; i <= pages; i++)
@@ -39,7 +39,7 @@ namespace ImageGallery.FlickrService
                 photoSearchOptions.Page = i;
                 var photoCollection = await _flickr.PhotosSearchAsync(photoSearchOptions);
                 photos.AddRange(photoCollection);
-            };
+            }
 
             return photos;
         }
@@ -50,7 +50,7 @@ namespace ImageGallery.FlickrService
 
         public async Task StartPhotosSearchQueueAsync(PhotoSearchOptions photoSearchOptions)
         {
-            if(IsSearchQueueRunning) return;
+            if (IsSearchQueueRunning) return;
             try
             {
                 IsSearchQueueRunning = true;
@@ -70,14 +70,13 @@ namespace ImageGallery.FlickrService
                 {
                     //copy options
                     var o = new PhotoSearchOptions();
-                    foreach (var property in typeof(PhotoSearchOptions).GetProperties().Where(a=> a.CanWrite && a.SetMethod != null && a.SetMethod.IsPublic))
+                    foreach (var property in typeof(PhotoSearchOptions).GetProperties().Where(a => a.CanWrite && a.SetMethod != null && a.SetMethod.IsPublic))
                         property.SetValue(o, property.GetValue(photoSearchOptions));
 
                     o.Page = page;
                     var photoCollection = await _flickr.PhotosSearchAsync(o);
                     foreach (var photo in photoCollection)
                     {
-                        
                         PhotosQueue.Enqueue(photo);
                         Log.Information("{@Page} Flickr Enqueue Image Metadata Complete {@Photo}", photoCollection.Page, photo.ToString());
                     }
