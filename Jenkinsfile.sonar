@@ -6,7 +6,7 @@ node('master') {
 
 
     stage('Sonar Scanning') {
-       sh 'docker run --name dotnet-scanner --tty --rm  --volume  $(pwd):/project stuartshay/sonarqube:dotnet-2.1-sdk -e PROJECT_KEY=ImageGallery.API.Client'
+       sh 'docker run -e PROJECT_KEY=ImageGalleryAPIClient --tty --rm --volume $(pwd):/project stuartshay/sonarqube:dotnet-2.1-sdk'
     }
   
    stage('Mail') {
