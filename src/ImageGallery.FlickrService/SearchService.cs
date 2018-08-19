@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using FlickrNet;
 using ImageGallery.FlickrService.Helpers;
-using Microsoft.Extensions.Logging;
 using Serilog;
 
 namespace ImageGallery.FlickrService
@@ -78,7 +77,8 @@ namespace ImageGallery.FlickrService
                     foreach (var photo in photoCollection)
                     {
                         PhotosQueue.Enqueue(photo);
-                        Log.Information("{@Page} Flickr Enqueue Image Metadata Complete {@Photo}", photoCollection.Page, photo.ToString());
+                        // photo.PrintPhoto();
+                        Log.Information("{@Page} Flickr Enqueue Image Metadata Complete {@PhotoId}|{@Title}", photoCollection.Page, photo.PhotoId, photo.Title);
                     }
                 });
             }

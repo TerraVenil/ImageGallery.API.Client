@@ -51,16 +51,16 @@ namespace ImageGallery.API.Client.Service.Services
 
                 };
 
-               var photoUrl = photo.Medium640Url;
-               HttpWebRequest request = (HttpWebRequest)WebRequest.Create(photoUrl);
-               HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-               using (Stream inputStream = response.GetResponseStream())
-               {
-                   using (var ms = new MemoryStream())
-                   {
-                       inputStream.CopyTo(ms);
-                       image.Bytes = ms.ToArray();
-                   }
+                var photoUrl = photo.Medium640Url;
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(photoUrl);
+                HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+                using (Stream inputStream = response.GetResponseStream())
+                {
+                    using (var ms = new MemoryStream())
+                    {
+                        inputStream.CopyTo(ms);
+                        image.Bytes = ms.ToArray();
+                    }
                 }
 
                 imageForCreations.Add(image);
@@ -82,7 +82,7 @@ namespace ImageGallery.API.Client.Service.Services
 
         public void StartImagesSearchQueue(SearchOptions options, int maxThreads)
         {
-            if(_isSearchRunning) return;
+            if (_isSearchRunning) return;
             _isSearchRunning = true;
 
             ThreadPool.QueueUserWorkItem(async s =>
@@ -128,7 +128,7 @@ namespace ImageGallery.API.Client.Service.Services
                         });
                     }
 
-                   // Console.WriteLine($"StartImagesSearchQueue ends! {ImageForCreations.Count} left, async counter: {_asynCounter}");
+                    // Console.WriteLine($"StartImagesSearchQueue ends! {ImageForCreations.Count} left, async counter: {_asynCounter}");
                 }
                 finally
                 {
@@ -142,14 +142,14 @@ namespace ImageGallery.API.Client.Service.Services
             var image = new ImageForCreation
             {
                 Title = photo.Title,
-                Category = "Test",
+                Category = "Flickr Batch",
                 PhotoId = long.Parse(photo.PhotoId),
                 DataSource = "Flickr"
             };
 
             var photoUrl = photo.GetPhotoUrl(size);
             var request = (HttpWebRequest)WebRequest.Create(photoUrl);
-            using (var response = (HttpWebResponse) request.GetResponse())
+            using (var response = (HttpWebResponse)request.GetResponse())
             {
                 using (var inputStream = response.GetResponseStream())
                 {
