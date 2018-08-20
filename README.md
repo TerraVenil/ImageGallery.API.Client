@@ -29,3 +29,24 @@ cd src\ImageGalleryAPI.Client.Console
 dotnet run
 
 ```
+
+### Machine Tag Filter
+
+#### Namespace
+
+```
+machine_tags => nycparks:
+```
+
+#### Predicate
+
+```
+machine_tags => nycparks:m010=
+https://www.flickr.com/photos/tags/nycparks:m010
+```
+
+#### Key
+```
+machine_tags => nycparks:m010=
+https://www.flickr.com/photos/tags/nycparks:m010=114
+```

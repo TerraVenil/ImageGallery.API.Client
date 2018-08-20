@@ -54,6 +54,14 @@ namespace ImageGallery.API.Client.Console
             var api = configuration["imagegallery-api:api"];
             var imageGalleryApi = configuration["imagegallery-api:uri"];
 
+            SearchOptions photoSearchOptions = new SearchOptions
+            {
+                // MachineTags = "machine_tags => nycparks:",
+                MachineTags = "machine_tags => nycparks:m010=",
+                //MachineTags = "machine_tags => nycparks:m010=114",
+                //UserId = "",
+            };
+
             TokenResponse token;
             try
             {
@@ -72,7 +80,7 @@ namespace ImageGallery.API.Client.Console
                 // start processing
                 // waitForPostComplete is true by default, waiting when image has finished upload
                 //  if we don't need to wait (e.g. no afterward actions are needed) we can set it to false to speed up even more
-                await PerformGetAndPost(token, imageGalleryApi, 30, true);
+                await PerformGetAndPost(token, photoSearchOptions, imageGalleryApi, 30, true);
             }
             finally
             {
@@ -97,28 +105,29 @@ namespace ImageGallery.API.Client.Console
         /// Uses conveyor queue logic to process images as soon as they are available
         /// </summary>
         /// <param name="token">Token</param>
+        /// <param name="searchOptions">Flickr Search Options</param>
         /// <param name="apiUri">ImageGallery Api Uri</param>
         /// <param name="threadCount"></param>
         /// <param name="waitForPostComplete"></param>
         /// <returns>
         ///  A <see cref="Task"/> representing the asynchronous operation.
         /// </returns>
-        private static async Task<string> PerformGetAndPost(TokenResponse token, string apiUri, int threadCount, bool waitForPostComplete)
+        private static async Task<string> PerformGetAndPost(TokenResponse token, SearchOptions searchOptions, string apiUri, int threadCount, bool waitForPostComplete)
         {
             var limit = System.Net.ServicePointManager.DefaultConnectionLimit;
             System.Net.ServicePointManager.DefaultConnectionLimit = threadCount * 2;
             ThreadPool.SetMinThreads(threadCount * 2, 4);
 
-            var searchOptions = new SearchOptions
+            var options = new SearchOptions
             {
                 PhotoSize = "z",
-                MachineTags = "machine_tags => nycparks:",
+                MachineTags = searchOptions.MachineTags,
             };
 
             try
             {
                 // start search processing
-                ImageSearchService.StartImagesSearchQueue(searchOptions, threadCount);
+                ImageSearchService.StartImagesSearchQueue(options, threadCount);
 
                 int asyncCount = 0;
 
@@ -146,11 +155,11 @@ namespace ImageGallery.API.Client.Console
                         {
                             try
                             {
-                               var status = PostImageGalleryApi(client, image, apiUri, waitForPostComplete).GetAwaiter().GetResult();
-                               if (!status.IsSuccessStatusCode)
-                               {
-                                   Log.Error($"{status.StatusCode.ToString()}");
-                               }
+                                var status = PostImageGalleryApi(client, image, apiUri, waitForPostComplete).GetAwaiter().GetResult();
+                                if (!status.IsSuccessStatusCode)
+                                {
+                                    Log.Error($"{status.StatusCode.ToString()}");
+                                }
                             }
                             finally
                             {
