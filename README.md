@@ -47,6 +47,6 @@ https://www.flickr.com/photos/tags/nycparks:m010
 
 #### Key
 ```
-machine_tags => nycparks:m010=
+machine_tags => nycparks:m010=114
 https://www.flickr.com/photos/tags/nycparks:m010=114
 ```
