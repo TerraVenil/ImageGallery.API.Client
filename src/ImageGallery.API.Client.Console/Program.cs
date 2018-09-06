@@ -58,8 +58,11 @@ namespace ImageGallery.API.Client.Console
             {
                 // MachineTags = "machine_tags => nycparks:",
                 MachineTags = "machine_tags => nycparks:m010=",
-                //MachineTags = "machine_tags => nycparks:m010=114",
-                //UserId = "",
+                // MachineTags = "machine_tags => nycparks:m010=114",
+                // UserId = "",
+                PhotoSize = "b", //width="1024" height="768
+                //PhotoSize = "z", // Medium 640
+                //PhotoSize = "o",
             };
 
             TokenResponse token;
@@ -67,6 +70,12 @@ namespace ImageGallery.API.Client.Console
             {
                 Metric.Start("token");
                 token = await TokenProvider.RequestResourceOwnerPasswordAsync(login, password, api);
+                if (token == null)
+                {
+                    Log.Error("Token Request Failed");
+                    return await Task.FromResult(1);
+                }
+
                 token.Show();
             }
             finally
@@ -120,7 +129,7 @@ namespace ImageGallery.API.Client.Console
 
             var options = new SearchOptions
             {
-                PhotoSize = "z",
+                PhotoSize = searchOptions.PhotoSize ?? "z",
                 MachineTags = searchOptions.MachineTags,
             };
 
@@ -158,7 +167,7 @@ namespace ImageGallery.API.Client.Console
                                 var status = PostImageGalleryApi(client, image, apiUri, waitForPostComplete).GetAwaiter().GetResult();
                                 if (!status.IsSuccessStatusCode)
                                 {
-                                    Log.Error($"{status.StatusCode.ToString()}");
+                                    Log.Error("{@Status} ImageGalleryAPI Post Error {@Image}", status.StatusCode.ToString(), image.ToString());
                                 }
                             }
                             finally
