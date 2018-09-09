@@ -34,9 +34,22 @@ namespace ImageGallery.API.Client.Service.Models
         [Required]
         public byte[] Bytes { get; set; }
 
+        public int FileSize
+        {
+            get
+            {
+                if (this.Bytes != null)
+                    return Bytes.Length;
+
+                return 0;
+            }
+        }
+
+
+
         public override string ToString()
         {
-            return $"PhotoId:{PhotoId}|Title:{Title}";
+            return $"PhotoId:{PhotoId}|Title:{Title}|FileSize:{FileSize}";
         }
 
     }

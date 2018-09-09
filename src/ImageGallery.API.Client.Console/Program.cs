@@ -57,11 +57,13 @@ namespace ImageGallery.API.Client.Console
             SearchOptions photoSearchOptions = new SearchOptions
             {
                 // MachineTags = "machine_tags => nycparks:",
-                MachineTags = "machine_tags => nycparks:m010=",
+                //MachineTags = "machine_tags => nycparks:m010=",
+                //MachineTags = "machine_tags => nycparks:m089=",
+                MachineTags = "machine_tags => nycparks:q436=",
                 // MachineTags = "machine_tags => nycparks:m010=114",
                 // UserId = "",
-                PhotoSize = "b", //width="1024" height="768
-                //PhotoSize = "z", // Medium 640
+                //PhotoSize = "b", //width="1024" height="768
+                PhotoSize = "z", // Medium 640
                 //PhotoSize = "o",
             };
 
@@ -197,11 +199,10 @@ namespace ImageGallery.API.Client.Console
         /// <returns></returns>
         private static async Task<HttpResponseMessage> PostImageGalleryApi(HttpClient client, ImageForCreation image, string apiUri, bool waitForPostComplete)
         {
-            Log.Verbose("ImageGalleryAPI Post {@Image}", image.ToString());
+            Log.Verbose("ImageGalleryAPI Post {@Image}| {FileSize}", image.ToString(), image.Bytes.Length);
 
             // TODO - Add Errors to be Handled
             var serializedImageForCreation = JsonConvert.SerializeObject(image);
-
             var response = await client.PostAsync(
                     $"{apiUri}/api/images",
                     new StringContent(serializedImageForCreation, System.Text.Encoding.Unicode, "application/json"))
