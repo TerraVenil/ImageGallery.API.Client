@@ -14,6 +14,9 @@ namespace ImageGallery.FlickrService
 
         private const int DefaultPageSize = 50;
 
+        protected volatile int _flickrQueriesCount;
+        public int FlickrQueriesCount => _flickrQueriesCount;
+
         public SearchService(string apiKey, string secret)
         {
             this._flickr = new Flickr(apiKey, secret);
@@ -27,9 +30,11 @@ namespace ImageGallery.FlickrService
 
         public async Task<IList<Photo>> SearchPhotosAsync(PhotoSearchOptions photoSearchOptions)
         {
+            _flickrQueriesCount = 0;
             var photos = new List<Photo>();
             var defaultPageSize = photoSearchOptions.PerPage != 0 ? photoSearchOptions.Page : DefaultPageSize;
             var total = _flickr.PhotosSearchAsync(photoSearchOptions).Result.Total;
+            _flickrQueriesCount++;
 
             var pages = PagingUtil.CalculateNumberOfPages(total, defaultPageSize);
 
@@ -37,6 +42,7 @@ namespace ImageGallery.FlickrService
             {
                 photoSearchOptions.Page = i;
                 var photoCollection = await _flickr.PhotosSearchAsync(photoSearchOptions);
+                _flickrQueriesCount++;
                 photos.AddRange(photoCollection);
             }
 
@@ -50,6 +56,7 @@ namespace ImageGallery.FlickrService
         public async Task StartPhotosSearchQueueAsync(PhotoSearchOptions photoSearchOptions)
         {
             if (IsSearchQueueRunning) return;
+            _flickrQueriesCount = 0;
             try
             {
                 IsSearchQueueRunning = true;
@@ -58,6 +65,7 @@ namespace ImageGallery.FlickrService
 
                 var defaultPageSize = photoSearchOptions.PerPage != 0 ? photoSearchOptions.Page : DefaultPageSize;
                 var x = await _flickr.PhotosSearchAsync(photoSearchOptions);
+                _flickrQueriesCount++;
                 var total = x.Total;
 
                 var count = PagingUtil.CalculateNumberOfPages(total, defaultPageSize);
@@ -74,6 +82,7 @@ namespace ImageGallery.FlickrService
 
                     o.Page = page;
                     var photoCollection = await _flickr.PhotosSearchAsync(o);
+                    _flickrQueriesCount++;
                     foreach (var photo in photoCollection)
                     {
                         PhotosQueue.Enqueue(photo);

@@ -13,5 +13,6 @@ namespace ImageGallery.FlickrService
         Task StartPhotosSearchQueueAsync(PhotoSearchOptions photoSearchOptions);
         ConcurrentQueue<Photo> PhotosQueue { get; }
         bool IsSearchQueueRunning { get; }
+        int FlickrQueriesCount { get; }
     }
 }

@@ -29,6 +29,23 @@ namespace ImageGallery.API.Client.Service.Services
             this._logger = logger;
         }
 
+        protected ulong InternalFlickrQueriesBytes;
+        
+        protected int InternalFlickrQueriesCount => _searchService?.FlickrQueriesCount ?? 0;
+        protected volatile int LocalFlickrQueriesCount;
+
+        public int FlickrQueriesCount => InternalFlickrQueriesCount + LocalFlickrQueriesCount;
+        public ulong FlickrQueriesBytes => InternalFlickrQueriesBytes;
+
+        private readonly object locker = new object();
+        private void UpdateFlickrBytes(int value)
+        {
+            lock (locker)
+            {
+                InternalFlickrQueriesBytes += (ulong)value;
+            }
+        }
+
         public async Task<IEnumerable<ImageForCreation>> GetImagesAsync(int maxImagesCount = 0)
         {
             var photoSearchOptions = new PhotoSearchOptions()
@@ -38,6 +55,7 @@ namespace ImageGallery.API.Client.Service.Services
             };
 
             List<ImageForCreation> imageForCreations = new List<ImageForCreation>();
+            InternalFlickrQueriesBytes = 0;
 
             var photos = await _searchService.SearchPhotosAsync(photoSearchOptions);
 
@@ -60,6 +78,7 @@ namespace ImageGallery.API.Client.Service.Services
                     {
                         inputStream.CopyTo(ms);
                         image.Bytes = ms.ToArray();
+                        UpdateFlickrBytes(image.Bytes.Length);
                     }
                 }
 
@@ -84,7 +103,8 @@ namespace ImageGallery.API.Client.Service.Services
         {
             if (_isSearchRunning) return;
             _isSearchRunning = true;
-
+            LocalFlickrQueriesCount = 0;
+            InternalFlickrQueriesBytes = 0;
             ThreadPool.QueueUserWorkItem(async s =>
             {
                 try
@@ -133,6 +153,7 @@ namespace ImageGallery.API.Client.Service.Services
                 finally
                 {
                     _isSearchRunning = false;
+
                 }
             });
         }
@@ -149,6 +170,7 @@ namespace ImageGallery.API.Client.Service.Services
 
             var photoUrl = photo.GetPhotoUrl(size);
             var request = (HttpWebRequest)WebRequest.Create(photoUrl);
+            LocalFlickrQueriesCount++;
             using (var response = (HttpWebResponse)request.GetResponse())
             {
                 using (var inputStream = response.GetResponseStream())
@@ -158,6 +180,7 @@ namespace ImageGallery.API.Client.Service.Services
                     {
                         inputStream.CopyTo(ms);
                         image.Bytes = ms.ToArray();
+                        UpdateFlickrBytes(image.Bytes.Length);
                     }
                 }
                 //put image into queue

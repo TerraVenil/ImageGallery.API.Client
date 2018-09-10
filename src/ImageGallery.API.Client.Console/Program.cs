@@ -98,6 +98,10 @@ namespace ImageGallery.API.Client.Console
                 Metric.StopAndWriteConsole("NEW flickrimg");
             }
 
+            System.Console.WriteLine($"Flickr Total API requests: {ImageSearchService.FlickrQueriesCount}");
+            System.Console.WriteLine($"Flickr Total Bytes: {ImageSearchService.FlickrQueriesBytes}");
+             
+
             try
             {
                 Metric.Start("get");

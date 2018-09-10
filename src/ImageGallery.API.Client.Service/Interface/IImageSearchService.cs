@@ -16,5 +16,8 @@ namespace ImageGallery.API.Client.Service.Interface
         ConcurrentQueue<ImageForCreation> ImageForCreations { get; }
 
         bool IsSearchRunning { get; }
+
+        int FlickrQueriesCount { get; }
+        ulong FlickrQueriesBytes { get; }
     }
 }
