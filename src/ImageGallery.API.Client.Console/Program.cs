@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using ByteSizeLib;
 using IdentityModel.Client;
 using ImageGallery.API.Client.Console.Classes;
 using ImageGallery.API.Client.Service.Classes;
@@ -54,17 +55,25 @@ namespace ImageGallery.API.Client.Console
             var api = configuration["imagegallery-api:api"];
             var imageGalleryApi = configuration["imagegallery-api:uri"];
 
+            var savetodisk = configuration["savetodisk"];
+            var filePath = configuration["filePath"];
+            System.Console.WriteLine($"{savetodisk}:{filePath}");
+
+            // Disable Get All List
+            var displayPhotoResults = false;
+
             SearchOptions photoSearchOptions = new SearchOptions
             {
-                // MachineTags = "machine_tags => nycparks:",
+                //MachineTags = "machine_tags => nycparks:",
+                MachineTags = "machine_tags => nyccentralpark:",
                 //MachineTags = "machine_tags => nycparks:m010=",
                 //MachineTags = "machine_tags => nycparks:m089=",
-                MachineTags = "machine_tags => nycparks:q436=",
+                //MachineTags = "machine_tags => nycparks:q436=",
                 // MachineTags = "machine_tags => nycparks:m010=114",
                 // UserId = "",
-                //PhotoSize = "b", //width="1024" height="768
-                PhotoSize = "z", // Medium 640
-                //PhotoSize = "o",
+                //PhotoSize = "q",   //150x150
+                //PhotoSize = "z",   // Medium 640
+                PhotoSize = "b",   //width="1024" height="768
             };
 
             TokenResponse token;
@@ -98,19 +107,21 @@ namespace ImageGallery.API.Client.Console
                 Metric.StopAndWriteConsole("NEW flickrimg");
             }
 
-            System.Console.WriteLine($"Flickr Total API requests: {ImageSearchService.FlickrQueriesCount}");
-            System.Console.WriteLine($"Flickr Total Bytes: {ImageSearchService.FlickrQueriesBytes}");
-             
+            if (displayPhotoResults)
+            {
+                try
+                {
+                    Metric.Start("get");
+                    await GetImageGalleryApi(token, imageGalleryApi);
+                }
+                finally
+                {
+                    Metric.StopAndWriteConsole("get");
+                }
+            }
 
-            try
-            {
-                Metric.Start("get");
-                await GetImageGalleryApi(token, imageGalleryApi);
-            }
-            finally
-            {
-                Metric.StopAndWriteConsole("get");
-            }
+            System.Console.WriteLine($"Flickr Total API requests: {ImageSearchService.FlickrQueriesCount}");
+            System.Console.WriteLine($"Flickr Total Bytes: {ByteSize.FromBytes(ImageSearchService.FlickrQueriesBytes).MegaBytes} Mb");
 
             System.Console.ReadLine();
             return 0;

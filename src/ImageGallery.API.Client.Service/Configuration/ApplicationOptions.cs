@@ -3,6 +3,7 @@
     public class ApplicationOptions
     {
 
+
         /// <summary>
         ///
         /// </summary>
