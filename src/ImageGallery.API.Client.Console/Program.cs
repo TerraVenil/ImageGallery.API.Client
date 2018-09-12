@@ -58,15 +58,16 @@ namespace ImageGallery.API.Client.Console
 
             SearchOptions photoSearchOptions = new SearchOptions
             {
-                // MachineTags = "machine_tags => nycparks:",
+                //MachineTags = "machine_tags => nycparks:",
+                MachineTags = "machine_tags => nyccentralpark:",
                 //MachineTags = "machine_tags => nycparks:m010=",
                 //MachineTags = "machine_tags => nycparks:m089=",
-                MachineTags = "machine_tags => nycparks:q436=",
+                //MachineTags = "machine_tags => nycparks:q436=",
                 // MachineTags = "machine_tags => nycparks:m010=114",
                 // UserId = "",
-                //PhotoSize = "b", //width="1024" height="768
-                PhotoSize = "z", // Medium 640
-                //PhotoSize = "o",
+                //PhotoSize = "q",   //150x150
+                //PhotoSize = "z",   // Medium 640
+                PhotoSize = "b",   //width="1024" height="768
             };
 
             TokenResponse token = null;
@@ -96,7 +97,7 @@ namespace ImageGallery.API.Client.Console
                 // start processing
                 // waitForPostComplete is true by default, waiting when image has finished upload
                 //  if we don't need to wait (e.g. no afterward actions are needed) we can set it to false to speed up even more
-                await PerformGetAndPost(token, photoSearchOptions, imageGalleryApi, 30, true);
+                await PerformGetAndPost(token, photoSearchOptions, imageGalleryApi, 10, true);
             }
             finally
             {
@@ -124,6 +125,7 @@ namespace ImageGallery.API.Client.Console
             return 0;
         }
 
+
         /// <summary>
         /// Uses conveyor queue logic to process images as soon as they are available
         /// </summary>
@@ -138,8 +140,10 @@ namespace ImageGallery.API.Client.Console
         private static async Task<string> PerformGetAndPost(TokenResponse token, SearchOptions searchOptions, string apiUri, int threadCount, bool waitForPostComplete)
         {
             var limit = System.Net.ServicePointManager.DefaultConnectionLimit;
-            System.Net.ServicePointManager.DefaultConnectionLimit = threadCount * 2;
+            System.Net.ServicePointManager.DefaultConnectionLimit = threadCount * 3;
+           // System.Net.ServicePointManager.MaxServicePoints = threadCount * 3;
             ThreadPool.SetMinThreads(threadCount * 2, 4);
+            int asyncCount = 0;
 
             var options = new SearchOptions
             {
@@ -152,7 +156,6 @@ namespace ImageGallery.API.Client.Console
                 // start search processing
                 ImageSearchService.StartImagesSearchQueue(options, threadCount);
 
-                int asyncCount = 0;
 
                 if (token != null) //online
                 {
@@ -170,27 +173,33 @@ namespace ImageGallery.API.Client.Console
 
                             // wait for available threads
                             while (asyncCount > threadCount) // http threads could stuck if there are too many. had to tweak this param
+
                             {
                                 await Task.Delay(5);
                             }
 
                             asyncCount++;
                             //run new processing thread
-                            ThreadPool.QueueUserWorkItem(state =>
+                            var th = new Thread(state =>
                             {
                                 try
                                 {
-                                    var status = PostImageGalleryApi(client, image, apiUri, waitForPostComplete).GetAwaiter().GetResult();
-                                    if (!status.IsSuccessStatusCode)
-                                    {
-                                        Log.Error("{@Status} ImageGalleryAPI Post Error {@Image}", status.StatusCode.ToString(), image.ToString());
-                                    }
+                                        var status = PostImageGalleryApi(client, image, apiUri, waitForPostComplete).GetAwaiter().GetResult();
+                                        if (!status.IsSuccessStatusCode)
+                                        {
+                                            Log.Error("{@Status} ImageGalleryAPI Post Error {@Image}", status.StatusCode.ToString(), image.ToString());
+                                        }
+                                }
+                                catch(Exception ex)
+                                {
+                                    Log.Error("{@Status} ImageGalleryAPI Post (WEB)Error {@Image}", "FAIL", image.ToString());
                                 }
                                 finally
                                 {
                                     asyncCount--;
                                 }
                             });
+                            th.Start();
                         }
                     }
                 }
@@ -220,9 +229,9 @@ namespace ImageGallery.API.Client.Console
                             {
                                 if (!ImageHelper.SaveImageFile(cfg.LocalImagesPath, image))
                                 {
-                                    Log.Error($"[FAIL] Local Image Save Error {image.ToString()}");
+                                    Log.Error("{@Status} Local Image Save Error {@Image}", "FAIL", image.ToString());
                                 }else 
-                                    Log.Information($"[OK] Local Image Save COMPLETE {image.ToString()}");
+                                    Log.Information("{@Status} Local Image Save COMPLETE {@Image}", "OK", image.ToString());
                             }
                             finally
                             {

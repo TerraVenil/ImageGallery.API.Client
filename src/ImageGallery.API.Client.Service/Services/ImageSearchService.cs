@@ -158,6 +158,8 @@ namespace ImageGallery.API.Client.Service.Services
             });
         }
 
+        private volatile bool neeee = false;
+
         private void PrepareImage(Photo photo, string size)
         {
             var image = new ImageForCreation
