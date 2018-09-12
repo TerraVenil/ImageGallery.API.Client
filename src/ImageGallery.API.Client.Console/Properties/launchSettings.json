@@ -2,6 +2,7 @@
   "profiles": {
     "ImageGallery.API.Client.Console": {
       "commandName": "Project",
+      "commandLineArgs": "/p",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }

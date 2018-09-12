@@ -41,9 +41,9 @@ namespace ImageGallery.API.Client.Console
 
         public static IImageSearchService ImageSearchService { get; set; }
 
-        public static int Main(string[] args) => MainAsync().GetAwaiter().GetResult();
+        public static int Main(string[] args) => MainAsync(args).GetAwaiter().GetResult();
 
-        private static async Task<int> MainAsync()
+        private static async Task<int> MainAsync(string[] args)
         {
             var serviceCollection = new ServiceCollection();
             ConfigureServices(serviceCollection);
@@ -53,6 +53,8 @@ namespace ImageGallery.API.Client.Console
             var password = configuration["imagegallery-api:password"];
             var api = configuration["imagegallery-api:api"];
             var imageGalleryApi = configuration["imagegallery-api:uri"];
+
+            var isLocalDiskOnly = args?.Contains("/p") ?? false;
 
             SearchOptions photoSearchOptions = new SearchOptions
             {
@@ -67,22 +69,25 @@ namespace ImageGallery.API.Client.Console
                 //PhotoSize = "o",
             };
 
-            TokenResponse token;
-            try
+            TokenResponse token = null;
+            if (!isLocalDiskOnly)
             {
-                Metric.Start("token");
-                token = await TokenProvider.RequestResourceOwnerPasswordAsync(login, password, api);
-                if (token == null)
+                try
                 {
-                    Log.Error("Token Request Failed");
-                    return await Task.FromResult(1);
-                }
+                    Metric.Start("token");
+                    token = await TokenProvider.RequestResourceOwnerPasswordAsync(login, password, api);
+                    if (token == null)
+                    {
+                        Log.Error("Token Request Failed");
+                        return await Task.FromResult(1);
+                    }
 
-                token.Show();
-            }
-            finally
-            {
-                Metric.StopAndWriteConsole("token");
+                    token.Show();
+                }
+                finally
+                {
+                    Metric.StopAndWriteConsole("token");
+                }
             }
 
             try
@@ -100,16 +105,19 @@ namespace ImageGallery.API.Client.Console
 
             System.Console.WriteLine($"Flickr Total API requests: {ImageSearchService.FlickrQueriesCount}");
             System.Console.WriteLine($"Flickr Total Bytes: {ImageSearchService.FlickrQueriesBytes}");
-             
 
-            try
+
+            if (!isLocalDiskOnly)
             {
-                Metric.Start("get");
-                await GetImageGalleryApi(token, imageGalleryApi);
-            }
-            finally
-            {
-                Metric.StopAndWriteConsole("get");
+                try
+                {
+                    Metric.Start("get");
+                    await GetImageGalleryApi(token, imageGalleryApi);
+                }
+                finally
+                {
+                    Metric.StopAndWriteConsole("get");
+                }
             }
 
             System.Console.ReadLine();
@@ -146,35 +154,75 @@ namespace ImageGallery.API.Client.Console
 
                 int asyncCount = 0;
 
-                // use single client for all queries
-                using (var client = new HttpClient())
+                if (token != null) //online
                 {
-                    client.SetBearerToken(token.AccessToken);
+                    // use single client for all queries
+                    using (var client = new HttpClient())
+                    {
+                        client.SetBearerToken(token.AccessToken);
 
-                    // do while image search is running, image queue is not empty or there are some async tasks left
+                        // do while image search is running, image queue is not empty or there are some async tasks left
+                        while (ImageSearchService.IsSearchRunning || !ImageSearchService.ImageForCreations.IsEmpty || asyncCount > 0)
+                        {
+                            // get image from queue
+                            if (!ImageSearchService.ImageForCreations.TryDequeue(out var image))
+                                continue;
+
+                            // wait for available threads
+                            while (asyncCount > threadCount) // http threads could stuck if there are too many. had to tweak this param
+                            {
+                                await Task.Delay(5);
+                            }
+
+                            asyncCount++;
+                            //run new processing thread
+                            ThreadPool.QueueUserWorkItem(state =>
+                            {
+                                try
+                                {
+                                    var status = PostImageGalleryApi(client, image, apiUri, waitForPostComplete).GetAwaiter().GetResult();
+                                    if (!status.IsSuccessStatusCode)
+                                    {
+                                        Log.Error("{@Status} ImageGalleryAPI Post Error {@Image}", status.StatusCode.ToString(), image.ToString());
+                                    }
+                                }
+                                finally
+                                {
+                                    asyncCount--;
+                                }
+                            });
+                        }
+                    }
+                }
+                else
+                {
+                    var cfg = Configuration.GetSection("generalConfiguration").Get<GeneralConfiguration>();
+                    if (cfg == null)
+                        return "Fail - not configured!";
+                    //local disk
                     while (ImageSearchService.IsSearchRunning || !ImageSearchService.ImageForCreations.IsEmpty || asyncCount > 0)
                     {
                         // get image from queue
                         if (!ImageSearchService.ImageForCreations.TryDequeue(out var image))
                             continue;
-
                         // wait for available threads
+
                         while (asyncCount > threadCount) // http threads could stuck if there are too many. had to tweak this param
                         {
                             await Task.Delay(5);
                         }
-
                         asyncCount++;
+
                         //run new processing thread
                         ThreadPool.QueueUserWorkItem(state =>
                         {
                             try
                             {
-                                var status = PostImageGalleryApi(client, image, apiUri, waitForPostComplete).GetAwaiter().GetResult();
-                                if (!status.IsSuccessStatusCode)
+                                if (!ImageHelper.SaveImageFile(cfg.LocalImagesPath, image))
                                 {
-                                    Log.Error("{@Status} ImageGalleryAPI Post Error {@Image}", status.StatusCode.ToString(), image.ToString());
-                                }
+                                    Log.Error($"[FAIL] Local Image Save Error {image.ToString()}");
+                                }else 
+                                    Log.Information($"[OK] Local Image Save COMPLETE {image.ToString()}");
                             }
                             finally
                             {
@@ -182,6 +230,7 @@ namespace ImageGallery.API.Client.Console
                             }
                         });
                     }
+
                 }
 
                 // Return Status Code

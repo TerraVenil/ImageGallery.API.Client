@@ -1,10 +1,26 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Drawing;
 using System.IO;
+using ImageGallery.API.Client.Service.Models;
 
 namespace ImageGallery.API.Client.Service.Helpers
 {
     public static class ImageHelper
     {
+        public static bool SaveImageFile(string path, ImageForCreation image)
+        {
+            try
+            {
+                var p = Path.Combine(path, $"{image.PhotoId.ToString()}.jpg");
+                File.WriteAllBytes(p, image.Bytes);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
         public static byte[] ReadImageFile(string imageLocation)
         {
             byte[] imageData = null;
