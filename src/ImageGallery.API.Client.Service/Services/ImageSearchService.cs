@@ -1,8 +1,11 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using FlickrNet;
@@ -23,10 +26,13 @@ namespace ImageGallery.API.Client.Service.Services
 
         private readonly Microsoft.Extensions.Logging.ILogger _logger;
 
+        private HttpClient _client;
+
         public ImageSearchService(ISearchService searchService, ILogger<ImageSearchService> logger)
         {
             this._searchService = searchService;
             this._logger = logger;
+
         }
 
         protected ulong InternalFlickrQueriesBytes;
@@ -50,7 +56,7 @@ namespace ImageGallery.API.Client.Service.Services
         {
             var photoSearchOptions = new PhotoSearchOptions()
             {
-                MachineTags = "machine_tags => nychalloffame:",
+                MachineTags = "machine_tags => nycparks:",
                 Extras = PhotoSearchExtras.All,
             };
 
@@ -99,12 +105,21 @@ namespace ImageGallery.API.Client.Service.Services
         private volatile int _asynCounter;
         private volatile bool _isSearchRunning;
 
-        public void StartImagesSearchQueue(SearchOptions options, int maxThreads)
+        public void StartImagesSearchQueue(SearchOptions options, int maxThreads, HttpClient client = null)
         {
             if (_isSearchRunning) return;
+
+            _client = client;
+            if (_client == null)
+            {
+                _client = new HttpClient();
+                _client.DefaultRequestHeaders.ConnectionClose = true;
+            }
+
             _isSearchRunning = true;
             LocalFlickrQueriesCount = 0;
             InternalFlickrQueriesBytes = 0;
+            _asynCounter = 0;
             ThreadPool.QueueUserWorkItem(async s =>
             {
                 try
@@ -132,20 +147,21 @@ namespace ImageGallery.API.Client.Service.Services
                         {
                             await Task.Delay(5);
                         }
+                        _asynCounter++;
 
                         //use local queue to prepare image
-                        _asynCounter++;
-                        ThreadPool.QueueUserWorkItem(state =>
+                        new Thread(async state =>
                         {
                             try
                             {
-                                PrepareImage(photo, options.PhotoSize);
+                                await PrepareImage(photo, options.PhotoSize);
                             }
                             finally
                             {
                                 _asynCounter--;
+                                Debug.WriteLine($"ISS: {_asynCounter}");
                             }
-                        });
+                        }).Start();
                     }
 
                     // Console.WriteLine($"StartImagesSearchQueue ends! {ImageForCreations.Count} left, async counter: {_asynCounter}");
@@ -158,9 +174,7 @@ namespace ImageGallery.API.Client.Service.Services
             });
         }
 
-        private volatile bool neeee = false;
-
-        private void PrepareImage(Photo photo, string size)
+        private async Task PrepareImage(Photo photo, string size)
         {
             var image = new ImageForCreation
             {
@@ -170,21 +184,12 @@ namespace ImageGallery.API.Client.Service.Services
                 DataSource = "Flickr"
             };
 
-            var photoUrl = photo.GetPhotoUrl(size);
-            var request = (HttpWebRequest)WebRequest.Create(photoUrl);
             LocalFlickrQueriesCount++;
-            using (var response = (HttpWebResponse)request.GetResponse())
+            using (var response = await _client.GetAsync(photo.GetPhotoUrl(size)))
             {
-                using (var inputStream = response.GetResponseStream())
-                {
-                    Log.Information("{@Status} Flickr Get Image Complete {@Image}", response.StatusCode, image.ToString());
-                    using (var ms = new MemoryStream())
-                    {
-                        inputStream.CopyTo(ms);
-                        image.Bytes = ms.ToArray();
-                        UpdateFlickrBytes(image.Bytes.Length);
-                    }
-                }
+                image.Bytes = await response.Content.ReadAsByteArrayAsync();
+                UpdateFlickrBytes(image.Bytes.Length);
+                Log.Information("{@Status} Flickr Get Image Complete {@Image}", response.StatusCode, image.ToString());
                 //put image into queue
                 ImageForCreations.Enqueue(image);
             }

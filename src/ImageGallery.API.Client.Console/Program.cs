@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -97,7 +98,7 @@ namespace ImageGallery.API.Client.Console
                 // start processing
                 // waitForPostComplete is true by default, waiting when image has finished upload
                 //  if we don't need to wait (e.g. no afterward actions are needed) we can set it to false to speed up even more
-                await PerformGetAndPost(token, photoSearchOptions, imageGalleryApi, 10, true);
+                await PerformGetAndPost(token, photoSearchOptions, imageGalleryApi, 10, 10, true);
             }
             finally
             {
@@ -126,6 +127,11 @@ namespace ImageGallery.API.Client.Console
         }
 
 
+        private static readonly HttpClient HttpClient = new HttpClient();
+
+        public static int ThreadsCount;
+
+
         /// <summary>
         /// Uses conveyor queue logic to process images as soon as they are available
         /// </summary>
@@ -137,12 +143,20 @@ namespace ImageGallery.API.Client.Console
         /// <returns>
         ///  A <see cref="Task"/> representing the asynchronous operation.
         /// </returns>
-        private static async Task<string> PerformGetAndPost(TokenResponse token, SearchOptions searchOptions, string apiUri, int threadCount, bool waitForPostComplete)
+        private static async Task<string> PerformGetAndPost(TokenResponse token, SearchOptions searchOptions, string apiUri, int threadCount, int postThreadCount, bool waitForPostComplete)
         {
             var limit = System.Net.ServicePointManager.DefaultConnectionLimit;
-            System.Net.ServicePointManager.DefaultConnectionLimit = threadCount * 3;
+            System.Net.ServicePointManager.DefaultConnectionLimit = 5;
+           // System.Net.ServicePointManager.MaxServicePoints = 1000;
+            HttpClient.DefaultRequestHeaders.ConnectionClose = true;
+            System.Net.ServicePointManager.ReusePort = true;
+           // System.Net.ServicePointManager.SetTcpKeepAlive(false,0,0);
+
+            if(token != null)
+                HttpClient.SetBearerToken(token.AccessToken);
+
            // System.Net.ServicePointManager.MaxServicePoints = threadCount * 3;
-            ThreadPool.SetMinThreads(threadCount * 2, 4);
+            ThreadPool.SetMinThreads(Math.Max(threadCount, postThreadCount) * 2, threadCount);
             int asyncCount = 0;
 
             var options = new SearchOptions
@@ -154,53 +168,48 @@ namespace ImageGallery.API.Client.Console
             try
             {
                 // start search processing
-                ImageSearchService.StartImagesSearchQueue(options, threadCount);
-
+                ImageSearchService.StartImagesSearchQueue(options, threadCount, HttpClient);
+                ThreadsCount = 0;
 
                 if (token != null) //online
                 {
-                    // use single client for all queries
-                    using (var client = new HttpClient())
-                    {
-                        client.SetBearerToken(token.AccessToken);
-
                         // do while image search is running, image queue is not empty or there are some async tasks left
-                        while (ImageSearchService.IsSearchRunning || !ImageSearchService.ImageForCreations.IsEmpty || asyncCount > 0)
+                    while (ImageSearchService.IsSearchRunning || !ImageSearchService.ImageForCreations.IsEmpty || asyncCount > 0)
+                    {
+                        // get image from queue
+                        if (!ImageSearchService.ImageForCreations.TryDequeue(out var image))
+                            continue;
+
+                        // wait for available threads
+                        while (asyncCount > postThreadCount) // http threads could stuck if there are too many. had to tweak this param
+
                         {
-                            // get image from queue
-                            if (!ImageSearchService.ImageForCreations.TryDequeue(out var image))
-                                continue;
-
-                            // wait for available threads
-                            while (asyncCount > threadCount) // http threads could stuck if there are too many. had to tweak this param
-
-                            {
-                                await Task.Delay(5);
-                            }
-
-                            asyncCount++;
-                            //run new processing thread
-                            var th = new Thread(state =>
-                            {
-                                try
-                                {
-                                        var status = PostImageGalleryApi(client, image, apiUri, waitForPostComplete).GetAwaiter().GetResult();
-                                        if (!status.IsSuccessStatusCode)
-                                        {
-                                            Log.Error("{@Status} ImageGalleryAPI Post Error {@Image}", status.StatusCode.ToString(), image.ToString());
-                                        }
-                                }
-                                catch(Exception ex)
-                                {
-                                    Log.Error("{@Status} ImageGalleryAPI Post (WEB)Error {@Image}", "FAIL", image.ToString());
-                                }
-                                finally
-                                {
-                                    asyncCount--;
-                                }
-                            });
-                            th.Start();
+                            await Task.Delay(5);
                         }
+
+                        Debug.WriteLine($"ADD MY P: {asyncCount}");
+                        asyncCount++;
+                        //run new processing thread
+                        new Thread(async state =>
+                        {
+                            try
+                            {
+                                var status = await PostImageGalleryApi(HttpClient, image, apiUri, waitForPostComplete);
+                                if (!status.IsSuccessStatusCode)
+                                {
+                                    Log.Error("{@Status} ImageGalleryAPI Post Error {@Image}", status.StatusCode.ToString(), image.ToString());
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Log.Error("{@Status} ImageGalleryAPI Post (WEB)Error {@Image}", "FAIL", image.ToString());
+                            }
+                            finally
+                            {
+                                asyncCount--;
+                                Debug.WriteLine($"P: {asyncCount}");
+                            }
+                        }).Start();
                     }
                 }
                 else

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Threading.Tasks;
 using FlickrNet;
 using ImageGallery.API.Client.Service.Classes;
@@ -11,7 +12,7 @@ namespace ImageGallery.API.Client.Service.Interface
     {
         Task<IEnumerable<ImageForCreation>>  GetImagesAsync(int maxImagesCount = 0);
 
-        void StartImagesSearchQueue(SearchOptions options, int maxThreads);
+        void StartImagesSearchQueue(SearchOptions options, int maxThreads, HttpClient httpClient);
 
         ConcurrentQueue<ImageForCreation> ImageForCreations { get; }
 

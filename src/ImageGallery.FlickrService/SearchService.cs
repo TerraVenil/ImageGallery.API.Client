@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using FlickrNet;
@@ -52,10 +53,12 @@ namespace ImageGallery.FlickrService
         public ConcurrentQueue<Photo> PhotosQueue { get; } = new ConcurrentQueue<Photo>();
 
         public bool IsSearchQueueRunning { get; private set; }
+        public static int ThreadsCount;
 
         public async Task StartPhotosSearchQueueAsync(PhotoSearchOptions photoSearchOptions)
         {
             if (IsSearchQueueRunning) return;
+            ThreadsCount = 0;
             _flickrQueriesCount = 0;
             try
             {
@@ -75,6 +78,7 @@ namespace ImageGallery.FlickrService
 
                 await AsyncHelper.RunWithMaxDegreeOfConcurrency(30, pages, async page =>
                 {
+                    ThreadsCount++;
                     //copy options
                     var o = new PhotoSearchOptions();
                     foreach (var property in typeof(PhotoSearchOptions).GetProperties().Where(a => a.CanWrite && a.SetMethod != null && a.SetMethod.IsPublic))
@@ -89,6 +93,9 @@ namespace ImageGallery.FlickrService
                         // photo.PrintPhoto();
                         Log.Information("{@Page} Flickr Enqueue Image Metadata Complete {@PhotoId}|{@Title}", photoCollection.Page, photo.PhotoId, photo.Title);
                     }
+
+                    ThreadsCount--;
+                    Debug.WriteLine($"SS: {ThreadsCount}");
                 });
             }
             finally
