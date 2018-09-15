@@ -105,7 +105,7 @@ namespace ImageGallery.API.Client.Service.Services
         private volatile int _asynCounter;
         private volatile bool _isSearchRunning;
 
-        public void StartImagesSearchQueue(SearchOptions options, int maxThreads, HttpClient client = null)
+        public void StartImagesSearchQueue(CancellationToken cancellation, SearchOptions options, int maxThreads, HttpClient client)
         {
             if (_isSearchRunning) return;
 
@@ -125,7 +125,11 @@ namespace ImageGallery.API.Client.Service.Services
                 try
                 {
                     while (!ImageForCreations.IsEmpty)
+                    {
+                        if (cancellation.IsCancellationRequested)
+                            return;
                         ImageForCreations.TryDequeue(out _);
+                    }
 
                     var photoSearchOptions = new PhotoSearchOptions
                     {
@@ -135,10 +139,12 @@ namespace ImageGallery.API.Client.Service.Services
                     };
 
                     //start remote queue
-                    await _searchService.StartPhotosSearchQueueAsync(photoSearchOptions).ConfigureAwait(false);
+                    await _searchService.StartPhotosSearchQueueAsync(cancellation, photoSearchOptions).ConfigureAwait(false);
 
                     while (_searchService.IsSearchQueueRunning || _asynCounter > 0 || _searchService.PhotosQueue.Count > 0)
                     {
+                        if (cancellation.IsCancellationRequested)
+                            return;
                         //fetch photos from remote queue
                         if (!_searchService.PhotosQueue.TryDequeue(out var photo))
                             continue;
@@ -152,9 +158,11 @@ namespace ImageGallery.API.Client.Service.Services
                         //use local queue to prepare image
                         new Thread(async state =>
                         {
+                            if (cancellation.IsCancellationRequested)
+                                return;
                             try
                             {
-                                await PrepareImage(photo, options.PhotoSize);
+                                await PrepareImage(photo, options.PhotoSize, cancellation);
                             }
                             finally
                             {
@@ -174,7 +182,7 @@ namespace ImageGallery.API.Client.Service.Services
             });
         }
 
-        private async Task PrepareImage(Photo photo, string size)
+        private async Task PrepareImage(Photo photo, string size, CancellationToken cancellation)
         {
             var image = new ImageForCreation
             {
@@ -185,13 +193,20 @@ namespace ImageGallery.API.Client.Service.Services
             };
 
             LocalFlickrQueriesCount++;
-            using (var response = await _client.GetAsync(photo.GetPhotoUrl(size)))
+            try
             {
-                image.Bytes = await response.Content.ReadAsByteArrayAsync();
-                UpdateFlickrBytes(image.Bytes.Length);
-                Log.Information("{@Status} Flickr Get Image Complete {@Image}", response.StatusCode, image.ToString());
-                //put image into queue
-                ImageForCreations.Enqueue(image);
+                using (var response = await _client.GetAsync(photo.GetPhotoUrl(size), cancellation))
+                {
+                    image.Bytes = await response.Content.ReadAsByteArrayAsync();
+                    UpdateFlickrBytes(image.Bytes.Length);
+                    Log.Information("{@Status} Flickr Get Image Complete {@Image}", response.StatusCode, image.ToString());
+                    //put image into queue
+                    ImageForCreations.Enqueue(image);
+                }
+            }
+            catch (Exception ex)
+            {
+                //TODO handle error
             }
         }
 

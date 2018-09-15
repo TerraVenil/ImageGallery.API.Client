@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using FlickrNet;
 using ImageGallery.FlickrService.Helpers;
@@ -55,7 +56,7 @@ namespace ImageGallery.FlickrService
         public bool IsSearchQueueRunning { get; private set; }
         public static int ThreadsCount;
 
-        public async Task StartPhotosSearchQueueAsync(PhotoSearchOptions photoSearchOptions)
+        public async Task StartPhotosSearchQueueAsync(CancellationToken cancellation, PhotoSearchOptions photoSearchOptions)
         {
             if (IsSearchQueueRunning) return;
             ThreadsCount = 0;
@@ -64,7 +65,12 @@ namespace ImageGallery.FlickrService
             {
                 IsSearchQueueRunning = true;
                 while (!PhotosQueue.IsEmpty)
+                {
+                    if (cancellation.IsCancellationRequested)
+                        return;
                     PhotosQueue.TryDequeue(out _);
+                }
+
 
                 var defaultPageSize = photoSearchOptions.PerPage != 0 ? photoSearchOptions.Page : DefaultPageSize;
                 var x = await _flickr.PhotosSearchAsync(photoSearchOptions);
@@ -76,8 +82,10 @@ namespace ImageGallery.FlickrService
                 for (int i = 1; i <= count; i++)
                     pages.Add(i);
 
-                await AsyncHelper.RunWithMaxDegreeOfConcurrency(30, pages, async page =>
+                await AsyncHelper.RunWithMaxDegreeOfConcurrency(cancellation, 30, pages, async page =>
                 {
+                    if (cancellation.IsCancellationRequested)
+                        return;
                     ThreadsCount++;
                     //copy options
                     var o = new PhotoSearchOptions();
@@ -89,6 +97,8 @@ namespace ImageGallery.FlickrService
                     _flickrQueriesCount++;
                     foreach (var photo in photoCollection)
                     {
+                        if (cancellation.IsCancellationRequested)
+                            return;
                         PhotosQueue.Enqueue(photo);
                         // photo.PrintPhoto();
                         Log.Information("{@Page} Flickr Enqueue Image Metadata Complete {@PhotoId}|{@Title}", photoCollection.Page, photo.PhotoId, photo.Title);

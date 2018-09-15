@@ -42,10 +42,20 @@ namespace ImageGallery.API.Client.Console
 
         public static IImageSearchService ImageSearchService { get; set; }
 
+        private static readonly CancellationTokenSource CSource = new CancellationTokenSource();
+
         public static int Main(string[] args) => MainAsync(args).GetAwaiter().GetResult();
 
         private static async Task<int> MainAsync(string[] args)
         {
+           // System.Console.TreatControlCAsInput = true;
+            System.Console.CancelKeyPress += (sender, e) =>
+            {
+                e.Cancel = true;
+                System.Console.WriteLine("CANCELLATION REQUEST!");
+                CSource.Cancel();
+            };
+
             var serviceCollection = new ServiceCollection();
             ConfigureServices(serviceCollection);
 
@@ -60,7 +70,7 @@ namespace ImageGallery.API.Client.Console
             SearchOptions photoSearchOptions = new SearchOptions
             {
                 //MachineTags = "machine_tags => nycparks:",
-                MachineTags = "machine_tags => nyccentralpark:",
+                MachineTags = "machine_tags => nychalloffame:",
                 //MachineTags = "machine_tags => nycparks:m010=",
                 //MachineTags = "machine_tags => nycparks:m089=",
                 //MachineTags = "machine_tags => nycparks:q436=",
@@ -68,11 +78,11 @@ namespace ImageGallery.API.Client.Console
                 // UserId = "",
                 //PhotoSize = "q",   //150x150
                 //PhotoSize = "z",   // Medium 640
-                PhotoSize = "b",   //width="1024" height="768
+                PhotoSize = "q",   //width="1024" height="768
             };
 
             TokenResponse token = null;
-            if (!isLocalDiskOnly)
+            if (!isLocalDiskOnly && !CSource.IsCancellationRequested)
             {
                 try
                 {
@@ -98,31 +108,34 @@ namespace ImageGallery.API.Client.Console
                 // start processing
                 // waitForPostComplete is true by default, waiting when image has finished upload
                 //  if we don't need to wait (e.g. no afterward actions are needed) we can set it to false to speed up even more
-                await PerformGetAndPost(token, photoSearchOptions, imageGalleryApi, 10, 10, true);
+                PerformGetAndPost(CSource.Token, token, photoSearchOptions, imageGalleryApi, 10, 10, false).ConfigureAwait(false).GetAwaiter().OnCompleted(async () =>
+                {
+                    System.Console.WriteLine($"Flickr Total API requests: {ImageSearchService.FlickrQueriesCount}");
+                    System.Console.WriteLine($"Flickr Total Bytes: {ImageSearchService.FlickrQueriesBytes}");
+
+                    if (!isLocalDiskOnly && !CSource.IsCancellationRequested)
+                    {
+                        try
+                        {
+                            Metric.Start("get");
+                            await GetImageGalleryApi(CSource.Token, token, imageGalleryApi);
+                        }
+                        finally
+                        {
+                            Metric.StopAndWriteConsole("get");
+                        }
+                    }
+
+                });
             }
             finally
             {
                 Metric.StopAndWriteConsole("NEW flickrimg");
             }
 
-            System.Console.WriteLine($"Flickr Total API requests: {ImageSearchService.FlickrQueriesCount}");
-            System.Console.WriteLine($"Flickr Total Bytes: {ImageSearchService.FlickrQueriesBytes}");
-
-
-            if (!isLocalDiskOnly)
-            {
-                try
-                {
-                    Metric.Start("get");
-                    await GetImageGalleryApi(token, imageGalleryApi);
-                }
-                finally
-                {
-                    Metric.StopAndWriteConsole("get");
-                }
-            }
 
             System.Console.ReadLine();
+
             return 0;
         }
 
@@ -143,7 +156,7 @@ namespace ImageGallery.API.Client.Console
         /// <returns>
         ///  A <see cref="Task"/> representing the asynchronous operation.
         /// </returns>
-        private static async Task<string> PerformGetAndPost(TokenResponse token, SearchOptions searchOptions, string apiUri, int threadCount, int postThreadCount, bool waitForPostComplete)
+        private static async Task<string> PerformGetAndPost(CancellationToken cancellation, TokenResponse token, SearchOptions searchOptions, string apiUri, int threadCount, int postThreadCount, bool waitForPostComplete)
         {
             var limit = System.Net.ServicePointManager.DefaultConnectionLimit;
             System.Net.ServicePointManager.DefaultConnectionLimit = 5;
@@ -168,7 +181,7 @@ namespace ImageGallery.API.Client.Console
             try
             {
                 // start search processing
-                ImageSearchService.StartImagesSearchQueue(options, threadCount, HttpClient);
+                ImageSearchService.StartImagesSearchQueue(cancellation, options, threadCount, HttpClient);
                 ThreadsCount = 0;
 
                 if (token != null) //online
@@ -176,6 +189,8 @@ namespace ImageGallery.API.Client.Console
                         // do while image search is running, image queue is not empty or there are some async tasks left
                     while (ImageSearchService.IsSearchRunning || !ImageSearchService.ImageForCreations.IsEmpty || asyncCount > 0)
                     {
+                        if (cancellation.IsCancellationRequested)
+                            return "ABORTED";
                         // get image from queue
                         if (!ImageSearchService.ImageForCreations.TryDequeue(out var image))
                             continue;
@@ -192,13 +207,18 @@ namespace ImageGallery.API.Client.Console
                         //run new processing thread
                         new Thread(async state =>
                         {
+                            if (cancellation.IsCancellationRequested)
+                                return;
                             try
                             {
-                                var status = await PostImageGalleryApi(HttpClient, image, apiUri, waitForPostComplete);
-                                if (!status.IsSuccessStatusCode)
+                                await PostImageGalleryApi(HttpClient, image, apiUri, waitForPostComplete, cancellation).ContinueWith(
+                                    status =>
                                 {
-                                    Log.Error("{@Status} ImageGalleryAPI Post Error {@Image}", status.StatusCode.ToString(), image.ToString());
-                                }
+                                    if (!status.Result.IsSuccessStatusCode)
+                                        Log.Error("{@Status} ImageGalleryAPI Post Error {@Image}", status.Result.StatusCode.ToString(), image.ToString());
+                                    else
+                                        Log.Information("{@Status} ImageGalleryAPI Post Complete {@Image}", status.Result.StatusCode, image.ToString());
+                                }, cancellation);
                             }
                             catch (Exception ex)
                             {
@@ -220,6 +240,8 @@ namespace ImageGallery.API.Client.Console
                     //local disk
                     while (ImageSearchService.IsSearchRunning || !ImageSearchService.ImageForCreations.IsEmpty || asyncCount > 0)
                     {
+                        if (cancellation.IsCancellationRequested)
+                            return "ABORTED";
                         // get image from queue
                         if (!ImageSearchService.ImageForCreations.TryDequeue(out var image))
                             continue;
@@ -234,6 +256,8 @@ namespace ImageGallery.API.Client.Console
                         //run new processing thread
                         ThreadPool.QueueUserWorkItem(state =>
                         {
+                            if (cancellation.IsCancellationRequested)
+                                return;
                             try
                             {
                                 if (!ImageHelper.SaveImageFile(cfg.LocalImagesPath, image))
@@ -247,6 +271,8 @@ namespace ImageGallery.API.Client.Console
                                 asyncCount--;
                             }
                         });
+                        if (cancellation.IsCancellationRequested)
+                            return "ABORTED";
                     }
 
                 }
@@ -268,7 +294,7 @@ namespace ImageGallery.API.Client.Console
         /// <param name="apiUri"></param>
         /// <param name="waitForPostComplete"></param>
         /// <returns></returns>
-        private static async Task<HttpResponseMessage> PostImageGalleryApi(HttpClient client, ImageForCreation image, string apiUri, bool waitForPostComplete)
+        private static async Task<HttpResponseMessage> PostImageGalleryApi(HttpClient client, ImageForCreation image, string apiUri, bool waitForPostComplete, CancellationToken cancellation)
         {
             Log.Verbose("ImageGalleryAPI Post {@Image}| {FileSize}", image.ToString(), image.Bytes.Length);
 
@@ -276,29 +302,27 @@ namespace ImageGallery.API.Client.Console
             var serializedImageForCreation = JsonConvert.SerializeObject(image);
             var response = await client.PostAsync(
                     $"{apiUri}/api/images",
-                    new StringContent(serializedImageForCreation, System.Text.Encoding.Unicode, "application/json"))
+                    new StringContent(serializedImageForCreation, System.Text.Encoding.Unicode, "application/json"), cancellation)
                 .ConfigureAwait(waitForPostComplete);
 
             // TODO - Log Transaction Time/Sucess Message
-            if (waitForPostComplete)
-                Log.Information("{@Status} ImageGalleryAPI Post Complete {@Image}", response.StatusCode, image.ToString());
-
             return response;
         }
 
         /// <summary>
         /// Image Gallery API - Get Images
         /// </summary>
+        /// <param name="cancellation"></param>
         /// <param name="token"></param>
         /// <param name="imageGalleryApi"></param>
         /// <returns></returns>
-        private static async Task<string> GetImageGalleryApi(TokenResponse token, string imageGalleryApi)
+        private static async Task<string> GetImageGalleryApi(CancellationToken cancellation, TokenResponse token, string imageGalleryApi)
         {
             // call api
             var client = new HttpClient();
             client.SetBearerToken(token.AccessToken);
 
-            var response = await client.GetAsync($"{imageGalleryApi}/api/images");
+            var response = await client.GetAsync($"{imageGalleryApi}/api/images", cancellation);
             if (!response.IsSuccessStatusCode)
             {
                 System.Console.WriteLine(response.StatusCode);

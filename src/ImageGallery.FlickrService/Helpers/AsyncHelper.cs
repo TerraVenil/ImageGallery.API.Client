@@ -3,18 +3,21 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ImageGallery.FlickrService.Helpers
 {
     public static class AsyncHelper
     {
-        public static async Task RunWithMaxDegreeOfConcurrency<T>(
-            int maxDegreeOfConcurrency, IEnumerable<T> collection, Func<T, Task> taskFactory)
+        public static async Task RunWithMaxDegreeOfConcurrency<T>(CancellationToken cancellation, int maxDegreeOfConcurrency, IEnumerable<T> collection,
+            Func<T, Task> taskFactory)
         {
             var activeTasks = new List<Task>(maxDegreeOfConcurrency);
             foreach (var task in collection.Select(taskFactory))
             {
+                if (cancellation.IsCancellationRequested)
+                    return;
                 activeTasks.Add(task);
                 if (activeTasks.Count == maxDegreeOfConcurrency)
                 {
