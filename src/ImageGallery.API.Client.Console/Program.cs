@@ -48,7 +48,7 @@ namespace ImageGallery.API.Client.Console
 
         private static async Task<int> MainAsync(string[] args)
         {
-           // System.Console.TreatControlCAsInput = true;
+            // System.Console.TreatControlCAsInput = true;
             System.Console.CancelKeyPress += (sender, e) =>
             {
                 e.Cancel = true;
@@ -113,18 +113,18 @@ namespace ImageGallery.API.Client.Console
                     System.Console.WriteLine($"Flickr Total API requests: {ImageSearchService.FlickrQueriesCount}");
                     System.Console.WriteLine($"Flickr Total Bytes: {ImageSearchService.FlickrQueriesBytes}");
 
-                    if (!isLocalDiskOnly && !CSource.IsCancellationRequested)
-                    {
-                        try
-                        {
-                            Metric.Start("get");
-                            await GetImageGalleryApi(CSource.Token, token, imageGalleryApi);
-                        }
-                        finally
-                        {
-                            Metric.StopAndWriteConsole("get");
-                        }
-                    }
+                    //if (!isLocalDiskOnly && !CSource.IsCancellationRequested)
+                    //{
+                    //    try
+                    //    {
+                    //        Metric.Start("get");
+                    //        await GetImageGalleryApi(CSource.Token, token, imageGalleryApi);
+                    //    }
+                    //    finally
+                    //    {
+                    //        Metric.StopAndWriteConsole("get");
+                    //    }
+                    //}
 
                 });
             }
@@ -133,17 +133,14 @@ namespace ImageGallery.API.Client.Console
                 Metric.StopAndWriteConsole("NEW flickrimg");
             }
 
-
             System.Console.ReadLine();
 
             return 0;
         }
 
-
         private static readonly HttpClient HttpClient = new HttpClient();
 
         public static int ThreadsCount;
-
 
         /// <summary>
         /// Uses conveyor queue logic to process images as soon as they are available
@@ -160,15 +157,15 @@ namespace ImageGallery.API.Client.Console
         {
             var limit = System.Net.ServicePointManager.DefaultConnectionLimit;
             System.Net.ServicePointManager.DefaultConnectionLimit = 5;
-           // System.Net.ServicePointManager.MaxServicePoints = 1000;
+            // System.Net.ServicePointManager.MaxServicePoints = 1000;
             HttpClient.DefaultRequestHeaders.ConnectionClose = true;
             System.Net.ServicePointManager.ReusePort = true;
-           // System.Net.ServicePointManager.SetTcpKeepAlive(false,0,0);
+            // System.Net.ServicePointManager.SetTcpKeepAlive(false,0,0);
 
-            if(token != null)
+            if (token != null)
                 HttpClient.SetBearerToken(token.AccessToken);
 
-           // System.Net.ServicePointManager.MaxServicePoints = threadCount * 3;
+            // System.Net.ServicePointManager.MaxServicePoints = threadCount * 3;
             ThreadPool.SetMinThreads(Math.Max(threadCount, postThreadCount) * 2, threadCount);
             int asyncCount = 0;
 
@@ -186,7 +183,7 @@ namespace ImageGallery.API.Client.Console
 
                 if (token != null) //online
                 {
-                        // do while image search is running, image queue is not empty or there are some async tasks left
+                    // do while image search is running, image queue is not empty or there are some async tasks left
                     while (ImageSearchService.IsSearchRunning || !ImageSearchService.ImageForCreations.IsEmpty || asyncCount > 0)
                     {
                         if (cancellation.IsCancellationRequested)
@@ -263,7 +260,8 @@ namespace ImageGallery.API.Client.Console
                                 if (!ImageHelper.SaveImageFile(cfg.LocalImagesPath, image))
                                 {
                                     Log.Error("{@Status} Local Image Save Error {@Image}", "FAIL", image.ToString());
-                                }else 
+                                }
+                                else
                                     Log.Information("{@Status} Local Image Save COMPLETE {@Image}", "OK", image.ToString());
                             }
                             finally
@@ -274,7 +272,6 @@ namespace ImageGallery.API.Client.Console
                         if (cancellation.IsCancellationRequested)
                             return "ABORTED";
                     }
-
                 }
 
                 // Return Status Code

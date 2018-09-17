@@ -3,7 +3,7 @@
     "ImageGallery.API.Client.Console": {
       "commandName": "Project",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Docker"
       }
     }
   }
