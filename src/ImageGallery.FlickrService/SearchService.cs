@@ -101,7 +101,7 @@ namespace ImageGallery.FlickrService
                             return;
                         PhotosQueue.Enqueue(photo);
                         // photo.PrintPhoto();
-                        Log.Information("{@Page} Flickr Enqueue Image Metadata Complete {@PhotoId}|{@Title}", photoCollection.Page, photo.PhotoId, photo.Title);
+                        Log.Information("{@Page} Flickr Enqueue Image Metadata Complete {@PhotoId}|{@Title}|{@LastUpdated}", photoCollection.Page, photo.PhotoId, photo.Title, photo.LastUpdated);
                     }
 
                     ThreadsCount--;
