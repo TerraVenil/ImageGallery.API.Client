@@ -29,14 +29,6 @@ namespace ImageGallery.API.Client.Console
 {
     public class Program
     {
-        /// <summary>
-        ///
-        /// </summary>
-        public static IConfiguration Configuration { get; } = new ConfigurationBuilder()
-            .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
-            .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development"}.json", optional: true)
-            .Build();
 
         public static ITokenProvider TokenProvider { get; set; }
 
@@ -45,8 +37,6 @@ namespace ImageGallery.API.Client.Console
         public static IImageSearchService ImageSearchService { get; set; }
 
         private static readonly CancellationTokenSource CSource = new CancellationTokenSource();
-
-        public static int RetriesCount = 3;
 
         public static int Main(string[] args) => MainAsync(args).GetAwaiter().GetResult();
 
@@ -63,7 +53,7 @@ namespace ImageGallery.API.Client.Console
             var serviceCollection = new ServiceCollection();
             ConfigureServices(serviceCollection);
 
-            IConfiguration configuration = Configuration;
+            IConfiguration configuration = ConfigurationHelper.Configuration;
             var login = configuration["imagegallery-api:login"];
             var password = configuration["imagegallery-api:password"];
             var api = configuration["imagegallery-api:api"];
@@ -98,7 +88,8 @@ namespace ImageGallery.API.Client.Console
                     token = await TokenProvider.RequestResourceOwnerPasswordAsync(login, password, api);
                     if (token == null)
                     {
-                        Log.Error("Token Request Failed");
+                        Log.Error("Token Request Failed. The app will close now.");
+                        System.Console.ReadKey();
                         return await Task.FromResult(1);
                     }
 
@@ -187,19 +178,25 @@ namespace ImageGallery.API.Client.Console
             try
             {
                 // start search processing
+
+                var cfg = ConfigurationHelper.GetGeneralConfig();
+                if (cfg == null)
+                    return "Fail - not configured!";
+
                 ImageSearchService.StartImagesSearchQueue(cancellation, options, threadCount, HttpClient);
                 ThreadsCount = 0;
 
                 var policy = Policy
                     .Handle<HttpRequestException>()
                     .WaitAndRetryAsync(
-                        retryCount: RetriesCount, // Retry 3 times
-                        sleepDurationProvider: attempt => TimeSpan.FromMilliseconds(200), // Wait 200ms between each try.
+                        retryCount: cfg.QueryRetriesCount, // Retry 3 times
+                        sleepDurationProvider: attempt => TimeSpan.FromMilliseconds(cfg.QueryWaitBetweenQueries), // Wait 200ms between each try.
                         onRetry: (exception, calculatedWaitDuration) => // Capture some info for logging!
                         {
-                            System.Console.WriteLine($"--> Retrying query due to {exception.InnerException?.Message ?? exception.Message}");
                             Log.Error("{@Status} ImageGalleryAPI Web Query Error! Retrying after {ex}", "ERROR", exception.InnerException?.Message ?? exception.Message);
                         });
+
+
 
                 if (token != null) //online
                 {
@@ -228,14 +225,7 @@ namespace ImageGallery.API.Client.Console
                                 return;
                             try
                             {
-                                await PostImageGalleryApi(HttpClient, policy, image, apiUri, waitForPostComplete, cancellation).ContinueWith(
-                                    status =>
-                                {
-                                    if (!status.Result.IsSuccessStatusCode)
-                                        Log.Error("{@Status} ImageGalleryAPI Post Error {@Image}", status.Result.StatusCode.ToString(), image.ToString());
-                                    else
-                                        Log.Information("{@Status} ImageGalleryAPI Post Complete {@Image}", status.Result.StatusCode, image.ToString());
-                                }, cancellation);
+                                await PostImageGalleryApi(HttpClient, policy, image, apiUri, waitForPostComplete, cancellation);
                             }
                             catch (Exception ex)
                             {
@@ -251,9 +241,7 @@ namespace ImageGallery.API.Client.Console
                 }
                 else
                 {
-                    var cfg = Configuration.GetSection("generalConfiguration").Get<GeneralConfiguration>();
-                    if (cfg == null)
-                        return "Fail - not configured!";
+
                     //local disk
                     while (ImageSearchService.IsSearchRunning || !ImageSearchService.ImageForCreations.IsEmpty || asyncCount > 0)
                     {
@@ -313,51 +301,76 @@ namespace ImageGallery.API.Client.Console
         /// <param name="waitForPostComplete"></param>
         /// <param name="cancellation"></param>
         /// <returns></returns>
-        private static async Task<HttpResponseMessage> PostImageGalleryApi(HttpClient client, RetryPolicy policy, ImageForCreation image, string apiUri, bool waitForPostComplete,
+        private static async Task PostImageGalleryApi(HttpClient client, RetryPolicy policy, ImageForCreation image, string apiUri, bool waitForPostComplete,
             CancellationToken cancellation)
         {
             Log.Verbose("ImageGalleryAPI Post {@Image}| {FileSize}", image.ToString(), image.Bytes.Length);
 
-            // TODO - Add Errors to be Handled
-            var serializedImageForCreation = JsonConvert.SerializeObject(image);
+            try
+            {
+                var serializedImageForCreation = JsonConvert.SerializeObject(image);
 
-            var response = await policy.ExecuteAsync(async () => await client.PostAsync(
-                    $"{apiUri}/api/images",
-                    new StringContent(serializedImageForCreation, System.Text.Encoding.Unicode, "application/json"), cancellation)
-                .ConfigureAwait(waitForPostComplete));
+                // TODO - Log Transaction Time/Sucess Message
+                await policy.ExecuteAsync(async token => await client.PostAsync(
+                        $"{apiUri}/api/images",
+                        new StringContent(serializedImageForCreation, System.Text.Encoding.Unicode, "application/json"), cancellation)
+                    .ConfigureAwait(waitForPostComplete), cancellation).ContinueWith(r =>
+                {
+                    if (!r.Result.IsSuccessStatusCode)
+                        Log.Error("{@Status} ImageGalleryAPI Post Error {@Image}", r.Result.StatusCode.ToString(), image.ToString());
+                    else
+                        Log.Information("{@Status} ImageGalleryAPI Post Complete {@Image}", r.Result.StatusCode, image.ToString());
+                    r.Result.Dispose();
+                }, cancellation);
 
-            // TODO - Log Transaction Time/Sucess Message
-            return response;
+
+            }
+            catch (JsonSerializationException ex)
+            {
+                Log.Error(ex, "ImageGalleryAPI Post JSON Exception: {ex}", ex.InnerException?.Message ?? ex.Message);
+            }
+            catch (HttpRequestException ex)
+            {
+                Log.Error(ex, "ImageGalleryAPI Post HTTP Exception: {ex}", ex.InnerException?.Message ?? ex.Message);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "ImageGalleryAPI Post General Exception: {ex}", ex.InnerException?.Message ?? ex.Message);
+            }
         }
 
         /// <summary>
         /// Image Gallery API - Get Images
         /// </summary>
+        /// <param name="policy"></param>
         /// <param name="cancellation"></param>
         /// <param name="token"></param>
         /// <param name="imageGalleryApi"></param>
         /// <returns></returns>
-        private static async Task<string> GetImageGalleryApi(CancellationToken cancellation, TokenResponse token, string imageGalleryApi)
+        private static async Task<string> GetImageGalleryApi(Policy policy, CancellationToken cancellation, TokenResponse token, string imageGalleryApi)
         {
             // call api
-            var client = new HttpClient();
-            client.SetBearerToken(token.AccessToken);
+            HttpClient.SetBearerToken(token.AccessToken);
 
-            var response = await client.GetAsync($"{imageGalleryApi}/api/images", cancellation);
-            if (!response.IsSuccessStatusCode)
+            var c = await policy.ExecuteAsync(async t => await HttpClient.GetAsync($"{imageGalleryApi}/api/images", t), cancellation).ContinueWith(async r =>
             {
-                System.Console.WriteLine(response.StatusCode);
-            }
-            else
-            {
-                var content = await response.Content.ReadAsStringAsync();
-                var images = JsonConvert.DeserializeObject<List<ImageModel>>(content);
-              //  System.Console.WriteLine(JArray.Parse(content));
-                System.Console.WriteLine($"ImagesCount:{images.Count}");
-                return content;
-            }
+                if (!r.Result.IsSuccessStatusCode)
+                {
+                    System.Console.WriteLine(r.Result.StatusCode);
+                }
+                else
+                {
+                    var content = await r.Result.Content.ReadAsStringAsync();
+                    var images = JsonConvert.DeserializeObject<List<ImageModel>>(content);
+                    //  System.Console.WriteLine(JArray.Parse(content));
+                    System.Console.WriteLine($"ImagesCount:{images.Count}");
+                    return content;
+                }
+                r.Dispose();
+                return null;
+            }, cancellation);
 
-            return null;
+            return c.Result;
         }
 
         private static void ConfigureServices(IServiceCollection serviceCollection)
@@ -378,10 +391,11 @@ namespace ImageGallery.API.Client.Console
                 serviceCollection.AddLogging();
 
                 serviceCollection.AddOptions();
-                serviceCollection.Configure<OpenIdConnectConfiguration>(Configuration.GetSection("openIdConnectConfiguration"));
+                //??serviceCollection.Configure<OpenIdConnectConfiguration>(configuration => ConfigurationHelper.GetOpenIdConfig());
 
-                var openIdConfig = Configuration.GetSection("openIdConnectConfiguration").Get<OpenIdConnectConfiguration>();
-                var flickrConfig = Configuration.GetSection("flickrConfiguration").Get<FlickrConfiguration>();
+                var openIdConfig = ConfigurationHelper.GetOpenIdConfig();
+                var flickrConfig = ConfigurationHelper.GetFlickrConfig();
+                var generalConfig = ConfigurationHelper.GetGeneralConfig();
 
                 var serviceProvider = new ServiceCollection()
                     .AddScoped<ITokenProvider>(_ => new TokenProvider(openIdConfig))
@@ -394,6 +408,9 @@ namespace ImageGallery.API.Client.Console
                 TokenProvider = serviceProvider.GetRequiredService<ITokenProvider>();
                 ImageService = serviceProvider.GetRequiredService<IImageService>();
                 ImageSearchService = serviceProvider.GetRequiredService<IImageSearchService>();
+                //TODO spread config helper influence to Flickr project and remove this property?
+                var ss = serviceProvider.GetRequiredService<ISearchService>();
+                ss.RetriesCount = generalConfig.QueryRetriesCount;
             }
             finally
             {

@@ -1,9 +1,14 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Net.Http;
+using System.Threading.Tasks;
 using IdentityModel.Client;
 using ImageGallery.API.Client.Service.Configuration;
+using ImageGallery.API.Client.Service.Helpers;
 using ImageGallery.API.Client.Service.Interface;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
+using Polly;
+using Serilog;
 
 namespace ImageGallery.API.Client.Service.Providers
 {
@@ -40,24 +45,50 @@ namespace ImageGallery.API.Client.Service.Providers
 
         public async Task<TokenResponse> RequestResourceOwnerPasswordAsync(string userName, string password, string api)
         {
-            //_logger.LogInformation($"This is a console application for {api}");
-
-            var disco = await DiscoveryClient.GetAsync(_auth);
-            if (disco.IsError)
+            try
             {
-                System.Console.WriteLine(disco.Error);
+                //_logger.LogInformation($"This is a console application for {api}");
+                var cfg = ConfigurationHelper.GetGeneralConfig();
+                var policy = Policy
+                    .Handle<HttpRequestException>()
+                    .WaitAndRetryAsync(
+                        retryCount: cfg.QueryRetriesCount,
+                        sleepDurationProvider: attempt => TimeSpan.FromMilliseconds(cfg.QueryWaitBetweenQueries), // Wait 200ms between each try.
+                        onRetry: (exception, calculatedWaitDuration) => // Capture some info for logging!
+                        {
+                            Log.Error("{@Status} ImageGalleryAPI TOKEN Query Error! Exception: {ex}", "ERROR", exception.InnerException?.Message ?? exception.Message);
+                        });
+
+                var disco = await policy.ExecuteAsync(async () =>
+                {
+                    var result = await DiscoveryClient.GetAsync(_auth);
+                    if (result.IsError)
+                        throw new HttpRequestException(result.Error);
+                    return result;
+                });
+                if (disco.IsError)
+                {
+                    System.Console.WriteLine(disco.Error);
+                    return null;
+                }
+
+
+
+                var tokenClient = new TokenClient(disco.TokenEndpoint, _clientId, _apiSecret);
+                var tokenResponse = await policy.ExecuteAsync(async () => await tokenClient.RequestResourceOwnerPasswordAsync(userName, password, api));
+                if (tokenResponse.IsError)
+                {
+                    System.Console.WriteLine(tokenResponse.Error);
+                    return null;
+                }
+
+                return tokenResponse;
+            }
+            catch (Exception ex)
+            {
+                Log.Error("{@Status} ImageGalleryAPI TOKEN Fatal Error: {ex}", "ERROR", ex.InnerException?.Message ?? ex.Message);
                 return null;
             }
-
-            var tokenClient = new TokenClient(disco.TokenEndpoint, _clientId, _apiSecret);
-            var tokenResponse = await tokenClient.RequestResourceOwnerPasswordAsync(userName, password, api);
-            if (tokenResponse.IsError)
-            {
-                System.Console.WriteLine(tokenResponse.Error);
-                return null;
-            }
-
-            return tokenResponse;
         }
 
     }

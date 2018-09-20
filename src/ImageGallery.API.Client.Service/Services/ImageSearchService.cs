@@ -10,11 +10,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using FlickrNet;
 using ImageGallery.API.Client.Service.Classes;
+using ImageGallery.API.Client.Service.Configuration;
+using ImageGallery.API.Client.Service.Helpers;
 using ImageGallery.API.Client.Service.Interface;
 using ImageGallery.API.Client.Service.Models;
 using ImageGallery.FlickrService;
 using ImageGallery.FlickrService.Helpers;
 using Microsoft.Extensions.Logging;
+using Polly;
+using Polly.Retry;
 using Serilog;
 
 
@@ -141,6 +145,18 @@ namespace ImageGallery.API.Client.Service.Services
                     //start remote queue
                     await _searchService.StartPhotosSearchQueueAsync(cancellation, photoSearchOptions).ConfigureAwait(false);
 
+                    var cfg = ConfigurationHelper.GetGeneralConfig();
+
+                    var policy = Policy
+                        .Handle<HttpRequestException>()
+                        .WaitAndRetryAsync(
+                            retryCount: cfg.QueryRetriesCount,
+                            sleepDurationProvider: attempt => TimeSpan.FromMilliseconds(cfg.QueryWaitBetweenQueries), // Wait 200ms between each try.
+                            onRetry: (exception, calculatedWaitDuration) => // Capture some info for logging!
+                            {
+                                Log.Error("{@Status} ImageGalleryAPI Web Query Error! Retrying after {ex}", "ERROR", exception.InnerException?.Message ?? exception.Message);
+                            });
+
                     while (_searchService.IsSearchQueueRunning || _asynCounter > 0 || _searchService.PhotosQueue.Count > 0)
                     {
                         if (cancellation.IsCancellationRequested)
@@ -151,7 +167,7 @@ namespace ImageGallery.API.Client.Service.Services
                         //wait for available threads
                         while (_asynCounter > maxThreads)
                         {
-                            await Task.Delay(5);
+                            await Task.Delay(5, cancellation);
                         }
                         _asynCounter++;
 
@@ -162,7 +178,7 @@ namespace ImageGallery.API.Client.Service.Services
                                 return;
                             try
                             {
-                                await PrepareImage(photo, options.PhotoSize, cancellation);
+                                await PrepareImage(policy, photo, options.PhotoSize, cancellation);
                             }
                             finally
                             {
@@ -182,7 +198,7 @@ namespace ImageGallery.API.Client.Service.Services
             });
         }
 
-        private async Task PrepareImage(Photo photo, string size, CancellationToken cancellation)
+        private async Task PrepareImage(IAsyncPolicy policy, Photo photo, string size, CancellationToken cancellation)
         {
             var image = new ImageForCreation
             {
@@ -195,18 +211,22 @@ namespace ImageGallery.API.Client.Service.Services
             LocalFlickrQueriesCount++;
             try
             {
-                using (var response = await _client.GetAsync(photo.GetPhotoUrl(size), cancellation))
+                await policy.ExecuteAsync(async token =>
                 {
-                    image.Bytes = await response.Content.ReadAsByteArrayAsync();
-                    UpdateFlickrBytes(image.Bytes.Length);
-                    Log.Information("{@Status} Flickr Get Image Complete {@Image}", response.StatusCode, image.ToString());
-                    //put image into queue
-                    ImageForCreations.Enqueue(image);
-                }
+                    using (var response = await _client.GetAsync(photo.GetPhotoUrl(size), token))
+                    {
+                        image.Bytes = await response.Content.ReadAsByteArrayAsync();
+                        Log.Information("{@Status} Flickr Get Image Complete {@Image}", response.StatusCode, image.ToString());
+                    }
+                }, cancellation);
+                UpdateFlickrBytes(image.Bytes.Length);
+                //put image into queue
+                ImageForCreations.Enqueue(image);
             }
             catch (Exception ex)
             {
                 //TODO handle error
+                Log.Error("{@Status} Flickr Get Image", "ERROR", ex.InnerException?.Message ?? ex.Message);
             }
         }
 

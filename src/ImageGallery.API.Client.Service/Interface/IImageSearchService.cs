@@ -20,6 +20,8 @@ namespace ImageGallery.API.Client.Service.Interface
         bool IsSearchRunning { get; }
 
         int FlickrQueriesCount { get; }
+
         ulong FlickrQueriesBytes { get; }
+
     }
 }

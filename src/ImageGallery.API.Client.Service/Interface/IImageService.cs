@@ -13,6 +13,5 @@ namespace ImageGallery.API.Client.Service.Interface
         void InsertImage(ImageForCreation value);
 
         void UpdateImage(ImageForUpdate value);
-
     }
 }

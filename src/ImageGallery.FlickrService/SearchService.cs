@@ -1,11 +1,14 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using FlickrNet;
 using ImageGallery.FlickrService.Helpers;
+using Polly;
 using Serilog;
 
 namespace ImageGallery.FlickrService
@@ -71,9 +74,18 @@ namespace ImageGallery.FlickrService
                     PhotosQueue.TryDequeue(out _);
                 }
 
+                var policy = Policy
+                    .Handle<HttpRequestException>()
+                    .WaitAndRetryAsync(
+                        retryCount: RetriesCount,
+                        sleepDurationProvider: attempt => TimeSpan.FromMilliseconds(200), // Wait 200ms between each try.
+                        onRetry: (exception, calculatedWaitDuration) => // Capture some info for logging!
+                        {
+                            Log.Error("{@Status} ImageGalleryAPI Web Query Error! Retrying after {ex}", "ERROR", exception.InnerException?.Message ?? exception.Message);
+                        });
 
                 var defaultPageSize = photoSearchOptions.PerPage != 0 ? photoSearchOptions.Page : DefaultPageSize;
-                var x = await _flickr.PhotosSearchAsync(photoSearchOptions);
+                var x = await policy.ExecuteAsync(async()=> await _flickr.PhotosSearchAsync(photoSearchOptions));
                 _flickrQueriesCount++;
                 var total = x.Total;
 
@@ -87,25 +99,35 @@ namespace ImageGallery.FlickrService
                     if (cancellation.IsCancellationRequested)
                         return;
                     ThreadsCount++;
-                    //copy options
-                    var o = new PhotoSearchOptions();
-                    foreach (var property in typeof(PhotoSearchOptions).GetProperties().Where(a => a.CanWrite && a.SetMethod != null && a.SetMethod.IsPublic))
-                        property.SetValue(o, property.GetValue(photoSearchOptions));
-
-                    o.Page = page;
-                    var photoCollection = await _flickr.PhotosSearchAsync(o);
-                    _flickrQueriesCount++;
-                    foreach (var photo in photoCollection)
+                    try
                     {
-                        if (cancellation.IsCancellationRequested)
-                            return;
-                        PhotosQueue.Enqueue(photo);
-                        // photo.PrintPhoto();
-                        Log.Information("{@Page} Flickr Enqueue Image Metadata Complete {@PhotoId}|{@Title}|{@LastUpdated}", photoCollection.Page, photo.PhotoId, photo.Title, photo.LastUpdated);
-                    }
+                        //copy options
+                        var o = new PhotoSearchOptions();
+                        foreach (var property in typeof(PhotoSearchOptions).GetProperties().Where(a => a.CanWrite && a.SetMethod != null && a.SetMethod.IsPublic))
+                            property.SetValue(o, property.GetValue(photoSearchOptions));
 
-                    ThreadsCount--;
-                    Debug.WriteLine($"SS: {ThreadsCount}");
+                        o.Page = page;
+                        var photoCollection = await policy.ExecuteAsync(async token => await _flickr.PhotosSearchAsync(o), cancellation);
+                        _flickrQueriesCount++;
+                        foreach (var photo in photoCollection)
+                        {
+                            if (cancellation.IsCancellationRequested)
+                                return;
+                            PhotosQueue.Enqueue(photo);
+                            // photo.PrintPhoto();
+                            Log.Information("{@Page} Flickr Enqueue Image Metadata Complete {@PhotoId}|{@Title}|{@LastUpdated}", photoCollection.Page, photo.PhotoId, photo.Title,
+                                photo.LastUpdated);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        //TODO logging
+                    }
+                    finally
+                    {
+                        ThreadsCount--;
+                        Debug.WriteLine($"SS: {ThreadsCount}");
+                    }
                 });
             }
             finally
@@ -113,5 +135,7 @@ namespace ImageGallery.FlickrService
                 IsSearchQueueRunning = false;
             }
         }
+
+        public int RetriesCount { get; set; } = 3;
     }
 }

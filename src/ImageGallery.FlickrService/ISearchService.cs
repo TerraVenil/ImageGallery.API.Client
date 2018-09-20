@@ -15,5 +15,7 @@ namespace ImageGallery.FlickrService
         ConcurrentQueue<Photo> PhotosQueue { get; }
         bool IsSearchQueueRunning { get; }
         int FlickrQueriesCount { get; }
+        int RetriesCount { get; set; }
     }
+
 }
