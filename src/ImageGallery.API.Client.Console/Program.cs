@@ -21,6 +21,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Polly;
+using Polly.Retry;
 using Serilog;
 
 namespace ImageGallery.API.Client.Console
@@ -44,6 +46,8 @@ namespace ImageGallery.API.Client.Console
 
         private static readonly CancellationTokenSource CSource = new CancellationTokenSource();
 
+        public static int RetriesCount = 3;
+
         public static int Main(string[] args) => MainAsync(args).GetAwaiter().GetResult();
 
         private static async Task<int> MainAsync(string[] args)
@@ -64,6 +68,7 @@ namespace ImageGallery.API.Client.Console
             var password = configuration["imagegallery-api:password"];
             var api = configuration["imagegallery-api:api"];
             var imageGalleryApi = configuration["imagegallery-api:uri"];
+
 
             var isLocalDiskOnly = args?.Contains("/p") ?? false;
 
@@ -101,6 +106,7 @@ namespace ImageGallery.API.Client.Console
                     Metric.StopAndWriteConsole("token");
                 }
             }
+
 
             try
             {
@@ -184,6 +190,17 @@ namespace ImageGallery.API.Client.Console
                 ImageSearchService.StartImagesSearchQueue(cancellation, options, threadCount, HttpClient);
                 ThreadsCount = 0;
 
+                var policy = Policy
+                    .Handle<HttpRequestException>()
+                    .WaitAndRetryAsync(
+                        retryCount: RetriesCount, // Retry 3 times
+                        sleepDurationProvider: attempt => TimeSpan.FromMilliseconds(200), // Wait 200ms between each try.
+                        onRetry: (exception, calculatedWaitDuration) => // Capture some info for logging!
+                        {
+                            System.Console.WriteLine($"--> Retrying query due to {exception.InnerException?.Message ?? exception.Message}");
+                            Log.Error("{@Status} ImageGalleryAPI Web Query Error! Retrying after {ex}", "ERROR", exception.InnerException?.Message ?? exception.Message);
+                        });
+
                 if (token != null) //online
                 {
                         // do while image search is running, image queue is not empty or there are some async tasks left
@@ -211,7 +228,7 @@ namespace ImageGallery.API.Client.Console
                                 return;
                             try
                             {
-                                await PostImageGalleryApi(HttpClient, image, apiUri, waitForPostComplete, cancellation).ContinueWith(
+                                await PostImageGalleryApi(HttpClient, policy, image, apiUri, waitForPostComplete, cancellation).ContinueWith(
                                     status =>
                                 {
                                     if (!status.Result.IsSuccessStatusCode)
@@ -290,20 +307,24 @@ namespace ImageGallery.API.Client.Console
         ///  Image Gallery API - Post Message
         /// </summary>
         /// <param name="client"></param>
+        /// <param name="policy"></param>
         /// <param name="image"></param>
         /// <param name="apiUri"></param>
         /// <param name="waitForPostComplete"></param>
+        /// <param name="cancellation"></param>
         /// <returns></returns>
-        private static async Task<HttpResponseMessage> PostImageGalleryApi(HttpClient client, ImageForCreation image, string apiUri, bool waitForPostComplete, CancellationToken cancellation)
+        private static async Task<HttpResponseMessage> PostImageGalleryApi(HttpClient client, RetryPolicy policy, ImageForCreation image, string apiUri, bool waitForPostComplete,
+            CancellationToken cancellation)
         {
             Log.Verbose("ImageGalleryAPI Post {@Image}| {FileSize}", image.ToString(), image.Bytes.Length);
 
             // TODO - Add Errors to be Handled
             var serializedImageForCreation = JsonConvert.SerializeObject(image);
-            var response = await client.PostAsync(
+
+            var response = await policy.ExecuteAsync(async () => await client.PostAsync(
                     $"{apiUri}/api/images",
                     new StringContent(serializedImageForCreation, System.Text.Encoding.Unicode, "application/json"), cancellation)
-                .ConfigureAwait(waitForPostComplete);
+                .ConfigureAwait(waitForPostComplete));
 
             // TODO - Log Transaction Time/Sucess Message
             return response;
@@ -331,7 +352,7 @@ namespace ImageGallery.API.Client.Console
             {
                 var content = await response.Content.ReadAsStringAsync();
                 var images = JsonConvert.DeserializeObject<List<ImageModel>>(content);
-                System.Console.WriteLine(JArray.Parse(content));
+              //  System.Console.WriteLine(JArray.Parse(content));
                 System.Console.WriteLine($"ImagesCount:{images.Count}");
                 return content;
             }
