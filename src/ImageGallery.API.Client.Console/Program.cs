@@ -112,6 +112,14 @@ namespace ImageGallery.API.Client.Console
                 {
                     System.Console.WriteLine($"Flickr Total API requests: {ImageSearchService.FlickrQueriesCount}");
                     System.Console.WriteLine($"Flickr Total Bytes: {ImageSearchService.FlickrQueriesBytes}");
+                    System.Console.WriteLine($"Total Photos Valid: XXXX");
+                    System.Console.WriteLine($"Total Photos Flaged: XXXX");
+                    for (int i = 0; i < 5; i++)
+                    {
+                        System.Console.WriteLine($"Dummy Photo Flaged PhotoId:{0}", i);
+                    }
+
+
 
                     //if (!isLocalDiskOnly && !CSource.IsCancellationRequested)
                     //{
