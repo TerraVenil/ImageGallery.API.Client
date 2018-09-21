@@ -11,6 +11,7 @@ namespace ImageGallery.API.Client.Service.Helpers
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
             .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development"}.json", optional: true)
+            .AddEnvironmentVariables()
             .Build();
 
         public static GeneralConfiguration GetGeneralConfig()

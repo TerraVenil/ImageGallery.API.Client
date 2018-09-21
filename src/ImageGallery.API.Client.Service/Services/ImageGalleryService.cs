@@ -216,7 +216,7 @@ namespace ImageGallery.API.Client.Service.Services
                     using (var response = await _client.GetAsync(photo.GetPhotoUrl(size), token))
                     {
                         image.Bytes = await response.Content.ReadAsByteArrayAsync();
-                        Log.Information("{@Status} Flickr Get Image Complete {@Image}", response.StatusCode, image.ToString());
+                        Log.Information("{@Status}  {@Image}", response.StatusCode, image.ToString());
                     }
                 }, cancellation);
                 UpdateFlickrBytes(image.Bytes.Length);
