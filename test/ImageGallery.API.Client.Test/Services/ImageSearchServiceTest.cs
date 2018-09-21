@@ -10,7 +10,7 @@ namespace ImageGallery.API.Client.Test.Services
 {
     public class ImageSearchServiceTest : IClassFixture<ImageServiceFixture>
     {
-        private readonly IImageSearchService _imageSearchService;
+        private readonly IImageGalleryService _imageSearchService;
 
         private readonly ITestOutputHelper _output;
 

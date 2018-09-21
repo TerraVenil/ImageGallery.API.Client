@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using IdentityModel.Client;
 using ImageGallery.API.Client.Console.Classes;
 using ImageGallery.API.Client.Service.Classes;
+using ImageGallery.API.Client.Service.Configuration;
 using ImageGallery.API.Client.Service.Helpers;
 using ImageGallery.API.Client.Service.Interface;
 using ImageGallery.API.Client.Service.Models;
@@ -29,7 +30,7 @@ namespace ImageGallery.API.Client.Console
     {
         public static ITokenProvider TokenProvider { get; set; }
 
-        public static IImageSearchService ImageSearchService { get; set; }
+        public static IImageGalleryService ImageSearchService { get; set; }
 
         private static readonly CancellationTokenSource CSource = new CancellationTokenSource();
 
@@ -392,24 +393,24 @@ namespace ImageGallery.API.Client.Console
                 serviceCollection.AddLogging();
 
                 serviceCollection.AddOptions();
-                //??serviceCollection.Configure<OpenIdConnectConfiguration>(configuration => ConfigurationHelper.GetOpenIdConfig());
+                serviceCollection.Configure<ApplicationOptions>(ConfigurationHelper.Configuration.GetSection("openIdConnectConfiguration"));
 
-                var openIdConfig = ConfigurationHelper.GetOpenIdConfig();
-                var flickrConfig = ConfigurationHelper.GetFlickrConfig();
-                var generalConfig = ConfigurationHelper.GetGeneralConfig();
+                var config = ConfigurationHelper.Configuration.Get<ApplicationOptions>();
 
                 var serviceProvider = new ServiceCollection()
-                    .AddScoped<ITokenProvider>(_ => new TokenProvider(openIdConfig))
-                    .AddScoped<ISearchService>(_ => new SearchService(flickrConfig.ApiKey, flickrConfig.Secret))
-                    .AddScoped<IImageSearchService, ImageSearchService>()
+                     .AddScoped<ITokenProvider>(_ => new TokenProvider(config.OpenIdConnectConfiguration))
+                    // TODO - REPLACE IOptions - https://keestalkstech.com/2018/04/dependency-injection-with-ioptions-in-console-apps-in-net-core-2/ 
+                    // .AddScoped<ITokenProvider, TokenProvider>() 
+                    .AddScoped<IFlickrSearchService>(_ => new FlickrSearchService(config.FlickrConfiguration.ApiKey, config.FlickrConfiguration.Secret))
+                    .AddScoped<IImageGalleryService, ImageGalleryService>()
                     .AddLogging()
                     .BuildServiceProvider();
 
                 TokenProvider = serviceProvider.GetRequiredService<ITokenProvider>();
-                ImageSearchService = serviceProvider.GetRequiredService<IImageSearchService>();
-                //TODO spread config helper influence to Flickr project and remove this property?
-                var ss = serviceProvider.GetRequiredService<ISearchService>();
-                ss.RetriesCount = generalConfig.QueryRetriesCount;
+                ImageSearchService = serviceProvider.GetRequiredService<IImageGalleryService>();
+
+                var flickrSearchService = serviceProvider.GetRequiredService<IFlickrSearchService>();
+                flickrSearchService.RetriesCount = config.GeneralConfiguration.QueryRetriesCount;
             }
             finally
             {

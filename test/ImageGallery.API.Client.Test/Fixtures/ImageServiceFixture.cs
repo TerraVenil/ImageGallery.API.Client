@@ -16,13 +16,13 @@ namespace ImageGallery.API.Client.Test.Fixtures
             PhotoDirectory = Path.GetFullPath(Path.Combine(appPath, photoPath));
 
             var serviceProvider = new ServiceCollection()
-                .AddScoped<IImageSearchService, ImageSearchService>()
+                .AddScoped<IImageGalleryService, ImageGalleryService>()
                 .BuildServiceProvider();
 
-            ImageSearchService = serviceProvider.GetRequiredService<IImageSearchService>();
+            ImageSearchService = serviceProvider.GetRequiredService<IImageGalleryService>();
         }
 
-        public IImageSearchService ImageSearchService { get; private set; }
+        public IImageGalleryService ImageSearchService { get; private set; }
 
         public string PhotoDirectory { get; private set; }
 

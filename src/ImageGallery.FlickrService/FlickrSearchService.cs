@@ -13,16 +13,17 @@ using Serilog;
 
 namespace ImageGallery.FlickrService
 {
-    public class SearchService : ISearchService
+    public class FlickrSearchService : IFlickrSearchService
     {
         private readonly Flickr _flickr;
 
         private const int DefaultPageSize = 50;
 
         protected volatile int _flickrQueriesCount;
+
         public int FlickrQueriesCount => _flickrQueriesCount;
 
-        public SearchService(string apiKey, string secret)
+        public FlickrSearchService(string apiKey, string secret)
         {
             this._flickr = new Flickr(apiKey, secret);
         }
@@ -57,6 +58,7 @@ namespace ImageGallery.FlickrService
         public ConcurrentQueue<Photo> PhotosQueue { get; } = new ConcurrentQueue<Photo>();
 
         public bool IsSearchQueueRunning { get; private set; }
+
         public static int ThreadsCount;
 
         public async Task StartPhotosSearchQueueAsync(CancellationToken cancellation, PhotoSearchOptions photoSearchOptions)
@@ -85,7 +87,7 @@ namespace ImageGallery.FlickrService
                         });
 
                 var defaultPageSize = photoSearchOptions.PerPage != 0 ? photoSearchOptions.Page : DefaultPageSize;
-                var x = await policy.ExecuteAsync(async()=> await _flickr.PhotosSearchAsync(photoSearchOptions));
+                var x = await policy.ExecuteAsync(async () => await _flickr.PhotosSearchAsync(photoSearchOptions));
                 _flickrQueriesCount++;
                 var total = x.Total;
 

@@ -22,25 +22,24 @@ namespace ImageGallery.API.Client.Service.Providers
 
         public string Api => "imagegalleryapi";
 
-        private readonly OpenIdConnectConfiguration _config;
+        private readonly ApplicationOptions _config;
 
         private readonly ILogger<TokenProvider> _logger;
-        public TokenProvider(ILogger<TokenProvider> logger,
-            IOptions<OpenIdConnectConfiguration> config)
+        public TokenProvider(IOptions<ApplicationOptions> config, ILogger<TokenProvider> logger)
         {
             _config = config.Value;
             _logger = logger;
 
-            _auth = _config.Authority;
-            _apiSecret = _config.ApiSecret;
-            _clientId = _config.ClientId;
+            _auth = _config.OpenIdConnectConfiguration.Authority ?? throw new ArgumentNullException(nameof(OpenIdConnectConfiguration.Authority)); ;
+            _apiSecret = _config.OpenIdConnectConfiguration.ApiSecret ?? throw new ArgumentNullException(nameof(OpenIdConnectConfiguration.ApiSecret));
+            _clientId = _config.OpenIdConnectConfiguration.ClientId ?? throw new ArgumentNullException(nameof(OpenIdConnectConfiguration.ClientId));
         }
 
         public TokenProvider(OpenIdConnectConfiguration configuration)
         {
-            _auth = configuration.Authority;
-            _apiSecret = configuration.ApiSecret;
-            _clientId = configuration.ClientId;
+            _auth = configuration.Authority ?? throw new ArgumentNullException(nameof(OpenIdConnectConfiguration.Authority));
+            _apiSecret = configuration.ApiSecret ?? throw new ArgumentNullException(nameof(OpenIdConnectConfiguration.ApiSecret));
+            _clientId = configuration.ClientId ?? throw new ArgumentNullException(nameof(OpenIdConnectConfiguration.ClientId));
         }
 
         public async Task<TokenResponse> RequestResourceOwnerPasswordAsync(string userName, string password, string api)

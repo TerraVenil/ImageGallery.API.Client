@@ -6,7 +6,7 @@ using ImageGallery.API.Client.Service.Models;
 
 namespace ImageGallery.API.Client.Service.Interface
 {
-    public interface IImageSearchService
+    public interface IImageGalleryService
     {
         void StartImagesSearchQueue(CancellationToken cancellation, SearchOptions options, int maxThreads, HttpClient httpClient);
 

@@ -10,7 +10,7 @@ namespace ImageGallery.API.Client.Test.Flickr
     {
         private readonly FlickrNet.Flickr _flickr;
 
-        private readonly ISearchService _searchService; 
+        private readonly IFlickrSearchService _searchService;
 
         private readonly ITestOutputHelper _output;
         public SearchServiceTest(FlickrFixture fixture, ITestOutputHelper output)

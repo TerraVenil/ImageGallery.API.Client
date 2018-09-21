@@ -34,14 +34,14 @@ namespace ImageGallery.API.Client.Test.Fixtures
             this.Flickr = new FlickrNet.Flickr(ApiKey, Secret);
 
             var serviceProvider = new ServiceCollection()
-                .AddScoped<ISearchService>(s => new SearchService(ApiKey, Secret))
+                .AddScoped<IFlickrSearchService>(s => new FlickrSearchService(ApiKey, Secret))
                 .BuildServiceProvider();
 
-            SearchService = serviceProvider.GetRequiredService<ISearchService>();
+            SearchService = serviceProvider.GetRequiredService<IFlickrSearchService>();
 
         }
 
-        public ISearchService SearchService { get; private set; }
+        public IFlickrSearchService SearchService { get; private set; }
 
         public void Dispose()
         {

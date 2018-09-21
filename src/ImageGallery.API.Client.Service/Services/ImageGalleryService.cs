@@ -10,7 +10,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using FlickrNet;
 using ImageGallery.API.Client.Service.Classes;
-using ImageGallery.API.Client.Service.Configuration;
 using ImageGallery.API.Client.Service.Helpers;
 using ImageGallery.API.Client.Service.Interface;
 using ImageGallery.API.Client.Service.Models;
@@ -18,36 +17,37 @@ using ImageGallery.FlickrService;
 using ImageGallery.FlickrService.Helpers;
 using Microsoft.Extensions.Logging;
 using Polly;
-using Polly.Retry;
 using Serilog;
 
 
 namespace ImageGallery.API.Client.Service.Services
 {
-    public class ImageSearchService : IImageSearchService
+    public class ImageGalleryService : IImageGalleryService
     {
-        private readonly ISearchService _searchService;
+        private readonly IFlickrSearchService _searchService;
 
         private readonly Microsoft.Extensions.Logging.ILogger _logger;
 
         private HttpClient _client;
 
-        public ImageSearchService(ISearchService searchService, ILogger<ImageSearchService> logger)
+        public ImageGalleryService(IFlickrSearchService searchService, ILogger<ImageGalleryService> logger)
         {
             this._searchService = searchService;
             this._logger = logger;
-
         }
 
         protected ulong InternalFlickrQueriesBytes;
-        
+
         protected int InternalFlickrQueriesCount => _searchService?.FlickrQueriesCount ?? 0;
+
         protected volatile int LocalFlickrQueriesCount;
 
         public int FlickrQueriesCount => InternalFlickrQueriesCount + LocalFlickrQueriesCount;
+
         public ulong FlickrQueriesBytes => InternalFlickrQueriesBytes;
 
         private readonly object locker = new object();
+
         private void UpdateFlickrBytes(int value)
         {
             lock (locker)
