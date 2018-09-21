@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading;
@@ -9,7 +8,6 @@ using System.Threading.Tasks;
 using IdentityModel.Client;
 using ImageGallery.API.Client.Console.Classes;
 using ImageGallery.API.Client.Service.Classes;
-using ImageGallery.API.Client.Service.Configuration;
 using ImageGallery.API.Client.Service.Helpers;
 using ImageGallery.API.Client.Service.Interface;
 using ImageGallery.API.Client.Service.Models;
@@ -20,25 +18,26 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Polly;
 using Polly.Retry;
 using Serilog;
+using Serilog.Sinks.SystemConsole.Themes;
 
 namespace ImageGallery.API.Client.Console
 {
     public class Program
     {
-
         public static ITokenProvider TokenProvider { get; set; }
-
-        public static IImageService ImageService { get; set; }
 
         public static IImageSearchService ImageSearchService { get; set; }
 
         private static readonly CancellationTokenSource CSource = new CancellationTokenSource();
 
         public static int Main(string[] args) => MainAsync(args).GetAwaiter().GetResult();
+
+        public static int ThreadsCount;
+
+        private static readonly HttpClient HttpClient = new HttpClient();
 
         private static async Task<int> MainAsync(string[] args)
         {
@@ -119,8 +118,6 @@ namespace ImageGallery.API.Client.Console
                         System.Console.WriteLine($"Dummy Photo Flaged PhotoId:{0}", i);
                     }
 
-
-
                     //if (!isLocalDiskOnly && !CSource.IsCancellationRequested)
                     //{
                     //    try
@@ -145,10 +142,6 @@ namespace ImageGallery.API.Client.Console
 
             return 0;
         }
-
-        private static readonly HttpClient HttpClient = new HttpClient();
-
-        public static int ThreadsCount;
 
         /// <summary>
         /// Uses conveyor queue logic to process images as soon as they are available
@@ -386,7 +379,7 @@ namespace ImageGallery.API.Client.Console
             try
             {
                 var log = new LoggerConfiguration()
-                    .WriteTo.ColoredConsole()
+                    .WriteTo.Console(theme: SystemConsoleTheme.Literate)
                     .CreateLogger();
 
                 Log.Logger = log;
@@ -408,13 +401,11 @@ namespace ImageGallery.API.Client.Console
                 var serviceProvider = new ServiceCollection()
                     .AddScoped<ITokenProvider>(_ => new TokenProvider(openIdConfig))
                     .AddScoped<ISearchService>(_ => new SearchService(flickrConfig.ApiKey, flickrConfig.Secret))
-                    .AddScoped<IImageService, ImageService>()
                     .AddScoped<IImageSearchService, ImageSearchService>()
                     .AddLogging()
                     .BuildServiceProvider();
 
                 TokenProvider = serviceProvider.GetRequiredService<ITokenProvider>();
-                ImageService = serviceProvider.GetRequiredService<IImageService>();
                 ImageSearchService = serviceProvider.GetRequiredService<IImageSearchService>();
                 //TODO spread config helper influence to Flickr project and remove this property?
                 var ss = serviceProvider.GetRequiredService<ISearchService>();

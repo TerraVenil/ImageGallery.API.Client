@@ -8,27 +8,27 @@ using Xunit.Abstractions;
 
 namespace ImageGallery.API.Client.Test.Services
 {
-    public class ImageServiceTest  : IClassFixture<ImageServiceFixture>
+    public class ImageSearchServiceTest : IClassFixture<ImageServiceFixture>
     {
-        private readonly IImageService _imageService;
+        private readonly IImageSearchService _imageSearchService;
 
         private readonly ITestOutputHelper _output;
 
         private readonly string _photoDirectory;
-        public ImageServiceTest(ImageServiceFixture fixture, ITestOutputHelper output)
+
+        public ImageSearchServiceTest(ImageServiceFixture fixture, ITestOutputHelper output)
         {
-            _imageService = fixture.ImageService;
+            _imageSearchService = fixture.ImageSearchService;
             _photoDirectory = fixture.PhotoDirectory;
 
             this._output = output;
         }
 
-
         [Theory]
         [InlineData("2645bd94-3614-43fc-b21f-1209d730fc71")]
         public void Can_Get_Image(string id)
         {
-            var result = _imageService.GetImage(id);
+            //var result = _imageService.GetImage(id);
             Assert.True(false, "TODO");
         }
 
@@ -36,7 +36,7 @@ namespace ImageGallery.API.Client.Test.Services
         [Fact]
         public void Can_Get_Images()
         {
-            var result = _imageService.GetImages();
+            //var result = _imageService.GetImages();
             Assert.True(false, "TODO");
         }
 
@@ -61,10 +61,9 @@ namespace ImageGallery.API.Client.Test.Services
                 Title = "Test"
             };
 
-            _imageService.InsertImage(image);
+            //_imageService.InsertImage(image);
 
             Assert.True(false, "TODO");
         }
-
     }
 }
