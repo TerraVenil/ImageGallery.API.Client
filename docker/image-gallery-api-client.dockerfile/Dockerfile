@@ -1,4 +1,4 @@
-FROM microsoft/dotnet:2.1-sdk AS build-env
+FROM microsoft/dotnet:2.1.402-sdk AS build-env
 
 RUN dotnet --version
 RUN cat /etc/os-release
@@ -19,8 +19,6 @@ WORKDIR /app
 RUN dotnet restore /p:RestoreUseSkipNonexistentTargets="false"
 
 WORKDIR /app/src/ImageGallery.API.Client.Console
-
-#RUN dotnet setversion 2.1.0.${BUILD_NUMBER};
 RUN dotnet publish -o /publish -c Release -f netcoreapp2.1 -r debian.9-x64
 
 # Runtime Image Stage
