@@ -1,10 +1,16 @@
-## Open Zipin - Docker Compose Stack
+## Open Zipkin - Docker Compose Stack
 
 https://github.com/openzipkin/docker-zipkin
 
 ```
 docker-compose -f docker-compose.yml pull
 docker-compose -f docker-compose.yml up
+```
+
+### Zipkin UI
+
+```
+http://zipkinserver:9411
 ```
 
 ### mysql
