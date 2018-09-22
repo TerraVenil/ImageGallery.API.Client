@@ -11,12 +11,8 @@ COPY scripts /
 COPY ImageGallery.API.Client.sln /app/ImageGallery.API.Client.sln
 COPY NuGet.config /app/NuGet.config
 
-
-COPY data/photos /data/photos
-
-
 WORKDIR /app
-RUN dotnet restore /p:RestoreUseSkipNonexistentTargets="false"
+RUN dotnet restore
 
 WORKDIR /app/src/ImageGallery.API.Client.Console
 RUN dotnet publish -o /publish -c Release -f netcoreapp2.1 -r debian.9-x64
@@ -37,6 +33,5 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /publish
 COPY --from=build-env /publish .
-COPY --from=build-env /data/photos  /data/photos
 
 ENTRYPOINT ["/entrypoint.sh"]
