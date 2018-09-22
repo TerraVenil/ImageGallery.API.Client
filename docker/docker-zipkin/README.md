@@ -1,4 +1,4 @@
-## Open Zipkin - Docker Compose Stack
+## Open Zipkin/Grafana - Docker Compose Stack
 
 https://github.com/openzipkin/docker-zipkin
 
@@ -10,9 +10,11 @@ Windows c:\windows\system32\drivers\etc\hosts
 
 ```
 192.168.99.100 zipkinserver
+192.168.99.100 grafana
+192.168.99.100 prometheus
 ```
 
-Run Zipkin Stack
+Run Zipkin/Grafana Stack
 ```
 docker-compose -f docker-compose.yml pull
 docker-compose -f docker-compose.yml up
@@ -22,6 +24,18 @@ docker-compose -f docker-compose.yml up
 
 ```
 http://zipkinserver:9411
+```
+
+### Grafana UI
+
+```
+http://grafana:3000
+```
+
+### Prometheus
+
+```
+http://prometheus:9009
 ```
 
 ### mysql
