@@ -12,7 +12,7 @@ Windows c:\windows\system32\drivers\etc\hosts
 192.168.99.100 zipkinserver
 ```
 
-
+Run Zipkin Stack
 ```
 docker-compose -f docker-compose.yml pull
 docker-compose -f docker-compose.yml up
