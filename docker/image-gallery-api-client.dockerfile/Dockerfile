@@ -11,8 +11,9 @@ COPY scripts /
 COPY ImageGallery.API.Client.sln /app/ImageGallery.API.Client.sln
 COPY NuGet.config /app/NuGet.config
 
+
 WORKDIR /app
-RUN dotnet restore
+RUN dotnet restore --ignore-failed-sources
 
 WORKDIR /app/src/ImageGallery.API.Client.Console
 RUN dotnet publish -o /publish -c Release -f netcoreapp2.1 -r debian.9-x64
