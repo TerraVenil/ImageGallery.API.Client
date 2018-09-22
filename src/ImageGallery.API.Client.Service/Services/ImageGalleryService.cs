@@ -24,21 +24,21 @@ namespace ImageGallery.API.Client.Service.Services
 {
     public class ImageGalleryService : IImageGalleryService
     {
-        private readonly IFlickrSearchService _searchService;
+        private readonly IFlickrSearchService _flickrSearchService;
 
         private readonly Microsoft.Extensions.Logging.ILogger _logger;
 
         private HttpClient _client;
 
-        public ImageGalleryService(IFlickrSearchService searchService, ILogger<ImageGalleryService> logger)
+        public ImageGalleryService(IFlickrSearchService flickrSearchService, ILogger<ImageGalleryService> logger)
         {
-            this._searchService = searchService;
+            this._flickrSearchService = flickrSearchService;
             this._logger = logger;
         }
 
         protected ulong InternalFlickrQueriesBytes;
 
-        protected int InternalFlickrQueriesCount => _searchService?.FlickrQueriesCount ?? 0;
+        protected int InternalFlickrQueriesCount => _flickrSearchService?.FlickrQueriesCount ?? 0;
 
         protected volatile int LocalFlickrQueriesCount;
 
@@ -67,7 +67,7 @@ namespace ImageGallery.API.Client.Service.Services
             List<ImageForCreation> imageForCreations = new List<ImageForCreation>();
             InternalFlickrQueriesBytes = 0;
 
-            var photos = await _searchService.SearchPhotosAsync(photoSearchOptions);
+            var photos = await _flickrSearchService.SearchPhotosAsync(photoSearchOptions);
 
             var list = maxImagesCount == 0 ? photos : photos.Take(maxImagesCount);
             foreach (var photo in list)
@@ -143,7 +143,7 @@ namespace ImageGallery.API.Client.Service.Services
                     };
 
                     //start remote queue
-                    await _searchService.StartPhotosSearchQueueAsync(cancellation, photoSearchOptions).ConfigureAwait(false);
+                    await _flickrSearchService.StartPhotosSearchQueueAsync(cancellation, photoSearchOptions).ConfigureAwait(false);
 
                     var cfg = ConfigurationHelper.GetGeneralConfig();
 
@@ -157,12 +157,12 @@ namespace ImageGallery.API.Client.Service.Services
                                 Log.Error("{@Status} ImageGalleryAPI Web Query Error! Retrying after {ex}", "ERROR", exception.InnerException?.Message ?? exception.Message);
                             });
 
-                    while (_searchService.IsSearchQueueRunning || _asynCounter > 0 || _searchService.PhotosQueue.Count > 0)
+                    while (_flickrSearchService.IsSearchQueueRunning || _asynCounter > 0 || _flickrSearchService.PhotosQueue.Count > 0)
                     {
                         if (cancellation.IsCancellationRequested)
                             return;
                         //fetch photos from remote queue
-                        if (!_searchService.PhotosQueue.TryDequeue(out var photo))
+                        if (!_flickrSearchService.PhotosQueue.TryDequeue(out var photo))
                             continue;
                         //wait for available threads
                         while (_asynCounter > maxThreads)

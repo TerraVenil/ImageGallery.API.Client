@@ -1,4 +1,4 @@
-FROM microsoft/dotnet:2.1-sdk AS build-env
+FROM microsoft/dotnet:2.1.402-sdk AS build-env
 
 RUN dotnet --version
 RUN cat /etc/os-release
@@ -12,15 +12,10 @@ COPY ImageGallery.API.Client.sln /app/ImageGallery.API.Client.sln
 COPY NuGet.config /app/NuGet.config
 
 
-COPY data/photos /data/photos
-
-
 WORKDIR /app
-RUN dotnet restore /p:RestoreUseSkipNonexistentTargets="false"
+RUN dotnet restore --ignore-failed-sources
 
 WORKDIR /app/src/ImageGallery.API.Client.Console
-
-#RUN dotnet setversion 2.1.0.${BUILD_NUMBER};
 RUN dotnet publish -o /publish -c Release -f netcoreapp2.1 -r debian.9-x64
 
 # Runtime Image Stage
@@ -39,6 +34,5 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /publish
 COPY --from=build-env /publish .
-COPY --from=build-env /data/photos  /data/photos
 
 ENTRYPOINT ["/entrypoint.sh"]
