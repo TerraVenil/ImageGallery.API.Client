@@ -24,7 +24,7 @@
     "ImageGallery.API.Client.WebApi": {
       "commandName": "Project",
       "launchBrowser": true,
-      "launchUrl": "api/values",
+      "launchUrl": "swagger",
       "environmentVariables": {
         "ASPNETCORE_URLS": "http://*:8150\"",
         "ASPNETCORE_ENVIRONMENT": "Development"

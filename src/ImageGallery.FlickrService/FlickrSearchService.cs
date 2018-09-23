@@ -10,6 +10,7 @@ using FlickrNet;
 using ImageGallery.FlickrService.Helpers;
 using Polly;
 using Serilog;
+using zipkin4net;
 
 namespace ImageGallery.FlickrService
 {
@@ -23,14 +24,19 @@ namespace ImageGallery.FlickrService
 
         public int FlickrQueriesCount => _flickrQueriesCount;
 
+        private readonly zipkin4net.Trace _trace;
+
         public FlickrSearchService(string apiKey, string secret)
         {
-            this._flickr = new Flickr(apiKey, secret);
+            _flickr = new Flickr(apiKey, secret);
+            _trace = zipkin4net.Trace.Create();
         }
 
         public async Task<PhotoInfo> GetPhotoInfoAsync(string photoId)
         {
+            _trace.Record(Annotations.LocalOperationStart("FlickrSearchService:GetPhotoInfoAsync"));
             var photoInfo = await _flickr.PhotosGetInfoAsync(photoId);
+            _trace.Record(Annotations.LocalOperationStop());
             return photoInfo;
         }
 

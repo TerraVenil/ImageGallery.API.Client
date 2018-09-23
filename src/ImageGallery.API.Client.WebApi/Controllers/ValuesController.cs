@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using App.Metrics;
+using ImageGallery.API.Client.WebApi.Metrics;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ImageGallery.API.Client.WebApi.Controllers
@@ -10,10 +12,18 @@ namespace ImageGallery.API.Client.WebApi.Controllers
     [ApiController]
     public class ValuesController : ControllerBase
     {
+        private readonly IMetrics _metrics;
+
+        public ValuesController(IMetrics metrics)
+        {
+            _metrics = metrics;
+        }
+
         // GET api/values
         [HttpGet]
         public ActionResult<IEnumerable<string>> Get()
         {
+            _metrics.Measure.Counter.Increment(MetricsRegistry.SampleCounter);
             return new string[] { "value1", "value2" };
         }
 

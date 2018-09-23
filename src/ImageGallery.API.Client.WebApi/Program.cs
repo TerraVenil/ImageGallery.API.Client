@@ -29,6 +29,16 @@ namespace ImageGallery.API.Client.WebApi
             WebHost.CreateDefaultBuilder(args)
                 .UseConfiguration(ConfigurationHelper.Configuration)
                 .UseUrls("http://*:8150")
-                .UseStartup<Startup>();
+                .UseStartup<Startup>()
+        //.ConfigureAppHealthHostingConfiguration(options =>
+        //{
+        //    options.HealthEndpoint = "/health";
+        //    options.PingEndpoint = "/ping";
+        //})
+        //.UseMetricsWebTracking()
+        //.UseMetricsEndpoints()
+        //.UseHealthEndpoints()
+        ;
+
     }
 }

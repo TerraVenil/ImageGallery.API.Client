@@ -23,13 +23,9 @@ namespace ImageGallery.API.Client.Test.Helper
         {
             var photoPath = Path.Combine(PhotoDirectory, image);
             var bytes = ImageHelper.ReadImageFile(photoPath);
-           
+
             Assert.NotEmpty(bytes);
         }
-
-
-
-
 
     }
 }
