@@ -13,7 +13,7 @@ COPY NuGet.config /app/NuGet.config
 
 
 WORKDIR /app
-RUN dotnet restore -nowarn:msb3202,nu1503
+RUN dotnet restore /p:RestoreUseSkipNonexistentTargets="false"
 
 WORKDIR /app/src/ImageGallery.API.Client.Console
 RUN dotnet publish -o /publish -c Release -f netcoreapp2.1 -r debian.9-x64
