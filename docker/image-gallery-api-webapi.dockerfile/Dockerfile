@@ -1,4 +1,4 @@
-FROM microsoft/dotnet:2.1-sdk AS build-env
+FROM microsoft/dotnet:2.1.402-sdk AS build-env
 
 RUN dotnet --version
 RUN cat /etc/os-release
@@ -6,26 +6,20 @@ RUN cat /etc/os-release
 ARG BUILD_NUMBER=0
 ENV BUILD_NUMBER ${BUILD_NUMBER}
 
-
-COPY . /app
-#COPY src /app/src
-## REMOVE - TEMP 
-#COPY src /app/test 
-#COPY scripts /
-#COPY ImageGallery.API.Client.sln /app/ImageGallery.API.Client.sln
-#COPY NuGet.config /app/NuGet.config
-
+COPY src /app/src
+COPY scripts /
+COPY ImageGallery.API.Client.sln /app/ImageGallery.API.Client.sln
+COPY NuGet.config /app/NuGet.config
 
 WORKDIR /app
-##RUN dotnet restore /p:RestoreUseSkipNonexistentTargets="false"
-RUN dotnet restore
+RUN dotnet restore /p:RestoreUseSkipNonexistentTargets="false"
 
 
 WORKDIR /app/src/ImageGallery.API.Client.WebApi
 RUN dotnet publish -o /publish -c Release -f netcoreapp2.1 -r debian.9-x64
 
 # Runtime Image Stage
-FROM microsoft/dotnet:2.1-runtime
+FROM microsoft/dotnet:2.1-aspnetcore-runtime
 
 RUN cat /etc/os-release
 
