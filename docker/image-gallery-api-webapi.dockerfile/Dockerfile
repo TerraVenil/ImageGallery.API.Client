@@ -17,7 +17,9 @@ COPY . /app
 
 
 WORKDIR /app
-RUN dotnet restore /p:RestoreUseSkipNonexistentTargets="false"
+##RUN dotnet restore /p:RestoreUseSkipNonexistentTargets="false"
+RUN dotnet restore
+
 
 WORKDIR /app/src/ImageGallery.API.Client.WebApi
 RUN dotnet publish -o /publish -c Release -f netcoreapp2.1 -r debian.9-x64
