@@ -10,6 +10,10 @@
  Jenkins | Status  
 ------------ | -------------
 Build Image (Console) | [![Build Status](https://jenkins.navigatorglass.com/buildStatus/icon?job=ImageGallery-API/ImageGallery-API-Client.Console)](https://jenkins.navigatorglass.com/job/ImageGallery-API/job/ImageGallery-API-Client.Console/)
+Build Image (Console) | [![Build Status](https://jenkins.navigatorglass.com/buildStatus/icon?job=ImageGallery-API/ImageGallery-API-Client.WebAPI)](https://jenkins.navigatorglass.com/job/ImageGallery-API/job/ImageGallery-API-Client.WebAPI/)
+
+
+
 SonarQube | [![Build Status](https://jenkins.navigatorglass.com/buildStatus/icon?job=ImageGallery-API/ImageGallery-API-Client-Sonarqube)](https://jenkins.navigatorglass.com/job/ImageGallery-API/job/ImageGallery-API-Client-Sonarqube/)
 
 ### Prerequisites
