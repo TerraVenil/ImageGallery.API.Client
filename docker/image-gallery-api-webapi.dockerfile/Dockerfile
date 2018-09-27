@@ -1,4 +1,4 @@
-FROM microsoft/dotnet:2.1.402-sdk AS build-env
+FROM microsoft/dotnet:2.1-sdk AS build-env
 
 RUN dotnet --version
 RUN cat /etc/os-release
