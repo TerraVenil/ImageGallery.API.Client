@@ -9,13 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="App.Metrics" Version="3.0.0-*" />
-    <PackageReference Include="App.Metrics.AspNetCore.Core" Version="3.0.0-*" />
-    <PackageReference Include="App.Metrics.AspNetCore.Endpoints" Version="2.0.0" />
-    <PackageReference Include="App.Metrics.AspNetCore.Health.Endpoints" Version="2.0.0" />
-    <PackageReference Include="App.Metrics.AspNetCore.Tracking" Version="2.0.0" />
-    <PackageReference Include="App.Metrics.Formatters.Prometheus" Version="2.0.0" />
-    <PackageReference Include="App.Metrics.Health" Version="2.0.0" />
-    <PackageReference Include="App.Metrics.Health.Core" Version="2.0.0" />
+    <PackageReference Include="App.Metrics.AspNetCore.Mvc" Version="3.0.0-*" />
     <PackageReference Include="App.Metrics.Reporting.Console" Version="3.0.0-*" />
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="2.1.1" />

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using App.Metrics.Health;
 using ImageGallery.API.Client.Service.Configuration;
 using ImageGallery.API.Client.Service.Helpers;
 using ImageGallery.FlickrService;
@@ -61,15 +60,14 @@ namespace ImageGallery.API.Client.WebApi
             });
 
             // AppMetrics
-            //var metrics = AppMetricsHealth.CreateDefaultBuilder()
-            //    .HealthChecks.RegisterFromAssembly(services)
-            //    .BuildAndAddTo(services);
+            services.AddMetrics();
+            //https://github.com/powerumc/microservice-architecture-quick-start/tree/6a5515301d5f2d26ce21f927535dce2bb02ae49f
+            //https://github.com/dotnet-architecture/eShopOnContainers/blob/dev/src/Services/Payment/Payment.API/Program.cs
+            //https://www.app-metrics.io/web-monitoring/aspnet-core/quick-start/
+            //https://github.com/fs7744/DataAccess/tree/master/src
+            //https://github.com/fs7744/DataAccess/blob/master/src/VIC.DataAccess.Zipkin/DataAccessZipkinTrace.cs
 
-            //services
-            //    .AddHealth(metrics)
-            //    .AddHealthEndpoints();
-
-
+            //Zipkin
             services.AddHttpClient("Tracer").AddHttpMessageHandler(provider =>
                 TracingHandler.WithoutInnerHandler(provider.GetService<IConfiguration>()["applicationName"]));
 
@@ -98,6 +96,7 @@ namespace ImageGallery.API.Client.WebApi
                 app.UseDeveloperExceptionPage();
             }
 
+            // Zipkin
             var lifetime = app.ApplicationServices.GetService<IApplicationLifetime>();
             lifetime.ApplicationStarted.Register(() =>
             {
@@ -110,7 +109,6 @@ namespace ImageGallery.API.Client.WebApi
                 TraceManager.Start(logger);
             });
             lifetime.ApplicationStopped.Register(() => TraceManager.Stop());
-
             app.UseTracing(applicationName);
 
             app.UseSwagger();
@@ -118,7 +116,6 @@ namespace ImageGallery.API.Client.WebApi
             {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "ImageGallery.API.Client.WebApi V1");
             });
-            //app.UseHealthAllEndpoints();
             app.UseMvc();
         }
 
