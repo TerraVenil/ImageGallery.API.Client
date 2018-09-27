@@ -35,4 +35,6 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /publish
 COPY --from=build-env /publish .
 
+# Open up port
+EXPOSE 8150 3333
 ENTRYPOINT ["dotnet", "ImageGallery.API.Client.WebApi.dll"]
