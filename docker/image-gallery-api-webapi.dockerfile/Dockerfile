@@ -6,12 +6,14 @@ RUN cat /etc/os-release
 ARG BUILD_NUMBER=0
 ENV BUILD_NUMBER ${BUILD_NUMBER}
 
-COPY src /app/src
+
+COPY . /app
+#COPY src /app/src
 ## REMOVE - TEMP 
-COPY src /app/test 
-COPY scripts /
-COPY ImageGallery.API.Client.sln /app/ImageGallery.API.Client.sln
-COPY NuGet.config /app/NuGet.config
+#COPY src /app/test 
+#COPY scripts /
+#COPY ImageGallery.API.Client.sln /app/ImageGallery.API.Client.sln
+#COPY NuGet.config /app/NuGet.config
 
 
 WORKDIR /app
