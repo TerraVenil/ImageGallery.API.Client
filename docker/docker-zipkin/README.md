@@ -20,8 +20,13 @@ docker-compose -f docker-compose.yml pull
 docker-compose -f docker-compose.yml up
 ```
 
+Run Zipkin/Grafana     
+w/ImageGallery.API.Client.WebApi Stack
+
+```
 docker-compose -f docker-compose.yml -f docker-compose-api.yml pull
 docker-compose -f docker-compose.yml -f docker-compose-api.yml up 
+```
 
 ### Zipkin Server/UI
 
