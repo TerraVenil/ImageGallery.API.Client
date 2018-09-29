@@ -60,8 +60,8 @@ services:
     depends_on:
       - storage
     volumes:
-      - ${PWD}/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
+      #- ${PWD}/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml  
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
@@ -84,9 +84,9 @@ services:
     container_name: setup_grafana_datasource
     depends_on:
       - grafana
-    volumes:
-      - ./prometheus/create-datasource-and-dashboard.sh:/create.sh:ro
-    command: /create.sh
+    #volumes:
+    #  - ./prometheus/create-datasource-and-dashboard.sh:/create.sh:ro
+    # command: /create.sh
 
 
 volumes:
