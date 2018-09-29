@@ -7,7 +7,7 @@ node('docker') {
 
 
     stage('Docker') {
-        sh 'docker build -f docker/docker-prometheus -t stuartshay/imagegallery-prometheus:v1 .'
+        sh 'docker build -f docker/docker-prometheus/Dockerfile -t stuartshay/imagegallery-prometheus:v1 .'
         withDockerRegistry([credentialsId: 'docker-hub-navigatordatastore']) {
             sh 'docker push stuartshay/imagegallery-prometheus:v1 '
         }

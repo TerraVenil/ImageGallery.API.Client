@@ -5,4 +5,4 @@
 
  Jenkins | Status  
 ------------ | -------------
-Build Image (Console) | [![Build Status](https://jenkins.navigatorglass.com/buildStatus/icon?job=ImageGallery-Infrastructure/imagegallery-prometheus)](https://jenkins.navigatorglass.com/job/ImageGallery-Infrastructure/job/imagegallery-prometheus/)
+Build Image  | [![Build Status](https://jenkins.navigatorglass.com/buildStatus/icon?job=ImageGallery-Infrastructure/imagegallery-prometheus)](https://jenkins.navigatorglass.com/job/ImageGallery-Infrastructure/job/imagegallery-prometheus/)
