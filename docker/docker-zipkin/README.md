@@ -43,7 +43,7 @@ http://grafana:3000
 ### Prometheus
 
 ```
-http://prometheus:9009
+http://prometheus:9090
 ```
 
 ### mysql
