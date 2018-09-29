@@ -80,7 +80,7 @@ services:
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
 
   setup_grafana_datasource:
-    image: appropriate/curl
+    image: stuartshay/imagegallery-grafana:config
     container_name: setup_grafana_datasource
     depends_on:
       - grafana
