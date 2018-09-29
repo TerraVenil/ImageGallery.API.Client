@@ -1,0 +1,22 @@
+node('docker') {
+
+
+    stage('Git Checkout') {
+        git branch: 'master', credentialsId: 'gihub-key', url: 'git@github.com:stuartshay/ImageGallery.API.Client.git'
+    }
+
+
+    stage('Docker') {
+        sh 'docker build -f docker/docker-grafana/Dockerfile -t stuartshay/imagegallery-grafana:v5.2.4 ./docker/docker-grafana'
+        withDockerRegistry([credentialsId: 'docker-hub-navigatordatastore']) {
+            sh 'docker push stuartshay/imagegallery-grafana:v5.2.4'
+        }
+    }
+
+
+    stage('Mail') {
+        emailext attachLog: true, body: '', subject: "Jenkins build status - ${currentBuild.fullDisplayName}", to: 'sshay@yahoo.com'
+    }
+
+ }   
+grafana/grafana:5.2.4
