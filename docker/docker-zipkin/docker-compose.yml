@@ -53,7 +53,7 @@ services:
       - storage
   
   prometheus:
-    image: prom/prometheus:v2.1.0
+    image: stuartshay/imagegallery-prometheus:v1
     container_name: prometheus
     ports:
       - 9090:9090
