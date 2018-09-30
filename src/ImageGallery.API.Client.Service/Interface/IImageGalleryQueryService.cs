@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Threading;
+using System.Threading.Tasks;
 using IdentityModel.Client;
 
 namespace ImageGallery.API.Client.Service.Interface
@@ -6,5 +7,7 @@ namespace ImageGallery.API.Client.Service.Interface
     public interface IImageGalleryQueryService
     {
         Task<string> GetUserImageCollectionAsync(TokenResponse token);
+
+        Task<string> GetUserImageCollectionAsync(TokenResponse token, CancellationToken cancellation);
     }
 }

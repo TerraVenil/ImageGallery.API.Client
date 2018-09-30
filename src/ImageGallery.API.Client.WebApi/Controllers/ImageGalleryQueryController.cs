@@ -31,9 +31,8 @@ namespace ImageGallery.API.Client.WebApi.Controllers
         [HttpGet]
         public async Task<IActionResult> Get()
         {
-            var token = await _tokenProvider.RequestResourceOwnerPasswordAsync("Mary", "password", "https://imagegallery-api.informationcart.com");
+            var token = await _tokenProvider.RequestResourceOwnerPasswordAsync("Mary", "password", "imagegalleryapi");
             var result = await _imageGalleryQueryService.GetUserImageCollectionAsync(token);
-
 
             return Ok(result);
         }

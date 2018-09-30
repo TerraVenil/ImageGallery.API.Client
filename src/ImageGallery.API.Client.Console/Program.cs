@@ -349,7 +349,7 @@ namespace ImageGallery.API.Client.Console
         /// <param name="token"></param>
         /// <param name="imageGalleryApi"></param>
         /// <returns></returns>
-        private static async Task<string> GetImageGalleryApi(Policy policy, CancellationToken cancellation, TokenResponse token, string imageGalleryApi)
+        private static async Task<string> GetUserImageCollectionAsync(Policy policy, CancellationToken cancellation, TokenResponse token, string imageGalleryApi)
         {
             // call api
             HttpClient.SetBearerToken(token.AccessToken);

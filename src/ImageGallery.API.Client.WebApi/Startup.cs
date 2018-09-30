@@ -81,23 +81,28 @@ namespace ImageGallery.API.Client.WebApi
             //Services 
             services.AddScoped<ITokenProvider>(_ => new TokenProvider(config.OpenIdConnectConfiguration));
             services.AddScoped<IFlickrSearchService>(_ => new FlickrSearchService(config.FlickrConfiguration.ApiKey, config.FlickrConfiguration.Secret));
+            services.AddScoped<IImageGalleryCommandService, ImageGalleryCommandService>();
             services.AddScoped<IImageGalleryQueryService, ImageGalleryQueryService>();
 
-            // Web Client - ImageGalleryQueryService
+            //Retry Policy
             var retryPolicy = Policy.TimeoutAsync<HttpResponseMessage>(TimeSpan.FromSeconds(10));
             services.AddHttpClient();
-            services.AddHttpClient<IImageGalleryQueryService, ImageGalleryQueryService>(client =>
+
+            // Web Client - ImageGalleryCommandService
+            services.AddHttpClient<IImageGalleryCommandService, ImageGalleryCommandService>(client =>
             {
                 client.BaseAddress = new Uri("https://imagegallery-api.informationcart.com");
-
-                //client.BaseAddress = new Uri("https://api.github.com/");
-                //client.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
-                //client.DefaultRequestHeaders.Add("User-Agent", "HttpClientFactory-Sample");
             })
-              .AddPolicyHandler(retryPolicy)
-              .AddTransientHttpErrorPolicy(p => p.RetryAsync(3))
-            ;
+                .AddPolicyHandler(retryPolicy)
+                .AddTransientHttpErrorPolicy(p => p.RetryAsync(3));
 
+            // Web Client - ImageGalleryQueryService
+            services.AddHttpClient<IImageGalleryQueryService, ImageGalleryQueryService>(client =>
+                {
+                    client.BaseAddress = new Uri("https://imagegallery-api.informationcart.com");
+                })
+                .AddPolicyHandler(retryPolicy)
+                .AddTransientHttpErrorPolicy(p => p.RetryAsync(3));
 
             services.AddMvc();
         }

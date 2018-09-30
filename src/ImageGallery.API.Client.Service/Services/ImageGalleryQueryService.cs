@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using IdentityModel.Client;
 using ImageGallery.API.Client.Service.Interface;
@@ -17,12 +18,6 @@ namespace ImageGallery.API.Client.Service.Services
         public ImageGalleryQueryService(HttpClient client)
         {
             _client = client;
-        }
-
-        public async Task<int> GetRootDataLength()
-        {
-            var data = await _client.GetStringAsync("/");
-            return data.Length;
         }
 
         public async Task<string> GetUserImageCollectionAsync(TokenResponse token)
@@ -44,6 +39,11 @@ namespace ImageGallery.API.Client.Service.Services
             }
 
             return null;
+        }
+
+        public Task<string> GetUserImageCollectionAsync(TokenResponse token, CancellationToken cancellation)
+        {
+            throw new NotImplementedException();
         }
     }
 }
