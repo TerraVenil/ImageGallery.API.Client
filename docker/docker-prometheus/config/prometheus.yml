@@ -13,6 +13,6 @@ scrape_configs:
       - targets: ['zipkin:9411']
   - job_name: 'api-imagegallery-client-webapi'
     scrape_interval: 5s
-    metrics_path: '/metrics'
+    metrics_path: '/metrics-text'
     static_configs:
       - targets: ['api-imagegallery-client-webapi:3333'] 
