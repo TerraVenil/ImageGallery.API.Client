@@ -1,0 +1,21 @@
+node('docker') {
+
+
+    stage('Git Checkout') {
+        git branch: 'master', credentialsId: 'gihub-key', url: 'git@github.com:stuartshay/ImageGallery.API.Client.git'
+    }
+
+
+    stage('Docker') {
+        sh 'docker build -f docker/docker-prometheus/Dockerfile -t stuartshay/imagegallery-prometheus:v2.4.2 ./docker/docker-prometheus'
+        withDockerRegistry([credentialsId: 'docker-hub-navigatordatastore']) {
+            sh 'docker push stuartshay/imagegallery-prometheus:v2.4.2 '
+        }
+    }
+
+
+    stage('Mail') {
+        emailext attachLog: true, body: '', subject: "Jenkins build status - ${currentBuild.fullDisplayName}", to: 'sshay@yahoo.com'
+    }
+
+ }   
