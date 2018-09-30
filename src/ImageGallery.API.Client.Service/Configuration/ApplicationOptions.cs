@@ -10,6 +10,11 @@
         public OpenIdConnectConfiguration OpenIdConnectConfiguration { get; set; }
 
         /// <summary>
+        ///
+        /// </summary>
+        public ImagegalleryApiConfiguration ImagegalleryApiConfiguration { get; set; }
+
+        /// <summary>
         /// 
         /// </summary>
         public FlickrConfiguration FlickrConfiguration { get; set; }

@@ -393,7 +393,6 @@ namespace ImageGallery.API.Client.Console
                 serviceCollection.AddLogging();
 
                 serviceCollection.AddOptions();
-                //serviceCollection.Configure<ApplicationOptions>(ConfigurationHelper.Configuration);
                 serviceCollection.Configure<ApplicationOptions>(ConfigurationHelper.Configuration.GetSection("openIdConnectConfiguration"));
                 serviceCollection.AddSingleton(ConfigurationHelper.Configuration);
 
@@ -401,8 +400,6 @@ namespace ImageGallery.API.Client.Console
 
                 var serviceProvider = new ServiceCollection()
                     .AddScoped<ITokenProvider>(_ => new TokenProvider(config.OpenIdConnectConfiguration))
-                    // TODO - REPLACE IOptions - https://keestalkstech.com/2018/04/dependency-injection-with-ioptions-in-console-apps-in-net-core-2/ 
-                    //.AddScoped<ITokenProvider, TokenProvider>()
                     .AddScoped<IFlickrSearchService>(_ => new FlickrSearchService(config.FlickrConfiguration.ApiKey, config.FlickrConfiguration.Secret))
                     .AddScoped<IImageGalleryService, ImageGalleryService>()
                     .AddLogging()

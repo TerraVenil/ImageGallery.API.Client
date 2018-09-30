@@ -12,8 +12,6 @@
         /// </summary>
         public string ClientId { get; set; }
 
-
-
         /// <summary>
         ///
         /// </summary>

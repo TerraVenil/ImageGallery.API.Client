@@ -1,13 +1,18 @@
 ﻿using System;
 using System.IO;
+using System.Net.Http;
 using ImageGallery.API.Client.Service.Configuration;
 using ImageGallery.API.Client.Service.Helpers;
+using ImageGallery.API.Client.Service.Interface;
+using ImageGallery.API.Client.Service.Providers;
+using ImageGallery.API.Client.Service.Services;
 using ImageGallery.FlickrService;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Polly;
 using Swashbuckle.AspNetCore.Swagger;
 using zipkin4net;
 using zipkin4net.Tracers.Zipkin;
@@ -46,9 +51,6 @@ namespace ImageGallery.API.Client.WebApi
             services.Configure<ApplicationOptions>(Configuration);
             services.AddSingleton(Configuration);
 
-            // http Client
-            services.AddHttpClient();
-
             var config = ConfigurationHelper.Configuration.Get<ApplicationOptions>();
 
             // Swagger
@@ -77,7 +79,24 @@ namespace ImageGallery.API.Client.WebApi
                 TracingHandler.WithoutInnerHandler(provider.GetService<IConfiguration>()["applicationName"]));
 
             //Services 
+            services.AddScoped<ITokenProvider>(_ => new TokenProvider(config.OpenIdConnectConfiguration));
             services.AddScoped<IFlickrSearchService>(_ => new FlickrSearchService(config.FlickrConfiguration.ApiKey, config.FlickrConfiguration.Secret));
+            services.AddScoped<IImageGalleryQueryService, ImageGalleryQueryService>();
+
+            // Web Client - ImageGalleryQueryService
+            var retryPolicy = Policy.TimeoutAsync<HttpResponseMessage>(TimeSpan.FromSeconds(10));
+            services.AddHttpClient();
+            services.AddHttpClient<IImageGalleryQueryService, ImageGalleryQueryService>(client =>
+            {
+                client.BaseAddress = new Uri("https://imagegallery-api.informationcart.com");
+
+                //client.BaseAddress = new Uri("https://api.github.com/");
+                //client.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
+                //client.DefaultRequestHeaders.Add("User-Agent", "HttpClientFactory-Sample");
+            })
+              .AddPolicyHandler(retryPolicy)
+              .AddTransientHttpErrorPolicy(p => p.RetryAsync(3))
+            ;
 
 
             services.AddMvc();
@@ -116,11 +135,9 @@ namespace ImageGallery.API.Client.WebApi
             lifetime.ApplicationStopped.Register(() => TraceManager.Stop());
             app.UseTracing(applicationName);
 
-            app.UseSwagger();
-            app.UseSwaggerUI(c =>
-            {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "ImageGallery.API.Client.WebApi V1");
-            });
+            // Swagger
+            ConfigureSwagger(app);
+
             app.UseMvc();
         }
 
@@ -132,5 +149,29 @@ namespace ImageGallery.API.Client.WebApi
 
             return Path.Combine(basePath, fileName);
         }
+
+        private void ConfigureSwagger(IApplicationBuilder app)
+        {
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "ImageGallery.API.Client.WebApi V1");
+            });
+        }
     }
+
+    public static class ServiceCollectionExtensions
+    {
+        private static IServiceCollection AddHttpServices(this IServiceCollection services)
+        {
+            services.AddHttpClient<IImageGalleryQueryService, ImageGalleryQueryService>(client =>
+            {
+                client.BaseAddress = new Uri("https://api.github.com/");
+            });
+
+            return services;
+        }
+    }
+
+
 }
