@@ -8,11 +8,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="App.Metrics" Version="3.0.0-*" />
-    <PackageReference Include="App.Metrics.AspNetCore.Mvc" Version="3.0.0-*" />
-    <PackageReference Include="App.Metrics.Reporting.Console" Version="3.0.0-*" />
+    <PackageReference Include="App.Metrics" Version="3.0.0-alpha-0780" />
+    <PackageReference Include="App.Metrics.AspNetCore.Mvc" Version="3.0.0-alpha-0098" />
+    <PackageReference Include="App.Metrics.Reporting.Console" Version="3.0.0-alpha-0081" />
+    <PackageReference Include="App.Metrics.Formatters.Prometheus" Version="3.0.0-alpha-0059" />
     <PackageReference Include="Microsoft.AspNetCore.App" />
-    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="2.1.1" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="2.2.0-preview2-35157" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="3.0.0" />
     <PackageReference Include="zipkin4net" Version="1.2.3" />
     <PackageReference Include="zipkin4net.middleware.aspnetcore" Version="1.2.3" />

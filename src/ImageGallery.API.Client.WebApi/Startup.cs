@@ -16,6 +16,9 @@ using zipkin4net.Middleware;
 
 namespace ImageGallery.API.Client.WebApi
 {
+    /// <summary>
+    ///
+    /// </summary>
     public class Startup
     {
         /// <summary>
@@ -42,6 +45,9 @@ namespace ImageGallery.API.Client.WebApi
             services.AddOptions();
             services.Configure<ApplicationOptions>(Configuration);
             services.AddSingleton(Configuration);
+
+            // http Client
+            services.AddHttpClient();
 
             var config = ConfigurationHelper.Configuration.Get<ApplicationOptions>();
 

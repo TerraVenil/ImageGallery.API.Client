@@ -1,5 +1,7 @@
 ﻿using System;
+using App.Metrics;
 using App.Metrics.AspNetCore;
+using App.Metrics.Formatters.Prometheus;
 using ImageGallery.API.Client.Service.Helpers;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
@@ -44,7 +46,20 @@ namespace ImageGallery.API.Client.WebApi
                 .UseConfiguration(ConfigurationHelper.Configuration)
                 .UseUrls("http://*:8150")
                 .UseStartup<Startup>()
-                .UseMetrics()
+                .UseMetrics(
+                    options =>
+                    {
+                        options.EndpointOptions = endpointsOptions =>
+                        {
+                            endpointsOptions.MetricsTextEndpointOutputFormatter = new MetricsPrometheusTextOutputFormatter();
+                            endpointsOptions.MetricsEndpointOutputFormatter = new MetricsPrometheusProtobufOutputFormatter();
+                        };
+                    })
+                .ConfigureMetrics(options =>
+                {
+                    options.OutputMetrics.AsPrometheusPlainText();
+                    options.OutputMetrics.AsPrometheusProtobuf();
+                })
                 .ConfigureAppMetricsHostingConfiguration(options =>
                 {
                     options.AllEndpointsPort = 3333;
