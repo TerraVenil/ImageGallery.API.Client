@@ -8,7 +8,7 @@ using Microsoft.Extensions.Options;
 namespace ImageGallery.API.Client.WebApi.Controllers
 {
     /// <summary>
-    /// 
+    /// Image Gallery Query Controller
     /// </summary>
     [Route("api/[controller]")]
     public class ImageGalleryQueryController : ControllerBase

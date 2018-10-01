@@ -11,10 +11,10 @@ using Microsoft.Extensions.Options;
 namespace ImageGallery.API.Client.WebApi.Controllers
 {
     /// <summary>
-    ///
+    /// ImageGallery Command Controller
     /// </summary>
     [Route("api/[controller]")]
-    public class ImageGalleryCommandController1cs : ControllerBase
+    public class ImageGalleryCommandController : ControllerBase
     {
         private readonly IImageGalleryCommandService _imageGalleryCommandService;
 
@@ -34,7 +34,7 @@ namespace ImageGallery.API.Client.WebApi.Controllers
         /// <param name="flickrSearchService"></param>
         ///  <param name="tokenProvider"></param>
         ///  <param name="settings"></param>
-        public ImageGalleryCommandController1cs(IImageGalleryCommandService imageGalleryCommandService, IFlickrDownloadService flickrDownloadService, IFlickrSearchService flickrSearchService,
+        public ImageGalleryCommandController(IImageGalleryCommandService imageGalleryCommandService, IFlickrDownloadService flickrDownloadService, IFlickrSearchService flickrSearchService,
             ITokenProvider tokenProvider, IOptionsSnapshot<ApplicationOptions> settings)
         {
             this._tokenProvider = tokenProvider ?? throw new ArgumentNullException(nameof(tokenProvider));
