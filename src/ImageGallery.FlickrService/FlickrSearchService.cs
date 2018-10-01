@@ -67,7 +67,7 @@ namespace ImageGallery.FlickrService
 
         public static int ThreadsCount;
 
-        public async Task StartPhotosSearchQueueAsync(CancellationToken cancellation, PhotoSearchOptions photoSearchOptions)
+        public async Task StartPhotosSearchQueueAsync(PhotoSearchOptions photoSearchOptions, CancellationToken cancellation)
         {
             if (IsSearchQueueRunning) return;
             ThreadsCount = 0;

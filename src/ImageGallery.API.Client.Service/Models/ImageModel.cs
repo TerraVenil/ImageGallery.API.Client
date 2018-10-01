@@ -11,5 +11,7 @@ namespace ImageGallery.API.Client.Service.Models
         public string FileName { get; set; }
 
         public string Category { get; set; }
+
+        public string PhotoId { get; set; }
     }
 }

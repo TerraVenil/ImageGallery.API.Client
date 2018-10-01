@@ -12,7 +12,7 @@ namespace ImageGallery.FlickrService
 
         Task<IList<Photo>> SearchPhotosAsync(PhotoSearchOptions photoSearchOptions);
 
-        Task StartPhotosSearchQueueAsync(CancellationToken searchOptions, PhotoSearchOptions photoSearchOptions);
+        Task StartPhotosSearchQueueAsync(PhotoSearchOptions photoSearchOptions, CancellationToken cancellation);
 
         ConcurrentQueue<Photo> PhotosQueue { get; }
 

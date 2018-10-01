@@ -20,8 +20,10 @@ namespace ImageGallery.API.Client.Service.Services
             _client = client;
         }
 
-        public async Task<string> GetUserImageCollectionAsync(TokenResponse token)
+        public async Task<List<ImageModel>> GetUserImageCollectionAsync(TokenResponse token)
         {
+            List<ImageModel> imageList = new List<ImageModel>();
+
             _client.SetBearerToken(token.AccessToken);
 
             var response = await _client.GetAsync($"/api/images");
@@ -32,16 +34,16 @@ namespace ImageGallery.API.Client.Service.Services
             else
             {
                 var content = await response.Content.ReadAsStringAsync();
-                var images = JsonConvert.DeserializeObject<List<ImageModel>>(content);
+                imageList = JsonConvert.DeserializeObject<List<ImageModel>>(content);
                 Console.WriteLine(JArray.Parse(content));
-                Console.WriteLine($"ImagesCount:{images.Count}");
-                return content;
+                Console.WriteLine($"ImagesCount:{imageList.Count}");
+                return imageList;
             }
 
-            return null;
+            return imageList;
         }
 
-        public Task<string> GetUserImageCollectionAsync(TokenResponse token, CancellationToken cancellation)
+        public Task<List<ImageModel>> GetUserImageCollectionAsync(TokenResponse token, CancellationToken cancellation)
         {
             throw new NotImplementedException();
         }

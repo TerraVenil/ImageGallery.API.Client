@@ -28,17 +28,17 @@ namespace ImageGallery.API.Client.Console
 {
     public class Program
     {
-        public static ITokenProvider TokenProvider { get; set; }
+        private static readonly HttpClient HttpClient = new HttpClient();
 
-        public static IImageGalleryService ImageSearchService { get; set; }
+        private static readonly CancellationTokenSource CancellationTokenSource = new CancellationTokenSource();
 
-        private static readonly CancellationTokenSource CSource = new CancellationTokenSource();
+        private static int _threadsCount;
+
+        private static ITokenProvider TokenProvider { get; set; }
+
+        private static IImageGalleryService ImageSearchService { get; set; }
 
         public static int Main(string[] args) => MainAsync(args).GetAwaiter().GetResult();
-
-        public static int ThreadsCount;
-
-        private static readonly HttpClient HttpClient = new HttpClient();
 
         private static async Task<int> MainAsync(string[] args)
         {
@@ -47,18 +47,12 @@ namespace ImageGallery.API.Client.Console
             {
                 e.Cancel = true;
                 System.Console.WriteLine("CANCELLATION REQUEST!");
-                CSource.Cancel();
+                CancellationTokenSource.Cancel();
             };
 
             var serviceCollection = new ServiceCollection();
             ConfigureServices(serviceCollection);
-
-            IConfiguration configuration = ConfigurationHelper.Configuration;
-            var login = configuration["imagegallery-api:login"];
-            var password = configuration["imagegallery-api:password"];
-            var api = configuration["imagegallery-api:api"];
-            var imageGalleryApi = configuration["imagegallery-api:uri"];
-
+            var config = ConfigurationHelper.Configuration.Get<ApplicationOptions>();
 
             var isLocalDiskOnly = args?.Contains("/p") ?? false;
 
@@ -80,12 +74,12 @@ namespace ImageGallery.API.Client.Console
             };
 
             TokenResponse token = null;
-            if (!isLocalDiskOnly && !CSource.IsCancellationRequested)
+            if (!isLocalDiskOnly && !CancellationTokenSource.IsCancellationRequested)
             {
                 try
                 {
                     Metric.Start("token");
-                    token = await TokenProvider.RequestResourceOwnerPasswordAsync(login, password, api);
+                    token = await TokenProvider.RequestResourceOwnerPasswordAsync(config.ImagegalleryApiConfiguration.Login, config.ImagegalleryApiConfiguration.Password, config.ImagegalleryApiConfiguration.Api);
                     if (token == null)
                     {
                         Log.Error("Token Request Failed. The app will close now.");
@@ -101,14 +95,13 @@ namespace ImageGallery.API.Client.Console
                 }
             }
 
-
             try
             {
                 Metric.Start("Flickr Search and Post");
                 // start processing
                 // waitForPostComplete is true by default, waiting when image has finished upload
                 //  if we don't need to wait (e.g. no afterward actions are needed) we can set it to false to speed up even more
-                PerformGetAndPost(CSource.Token, token, photoSearchOptions, imageGalleryApi, 10, 10, false).ConfigureAwait(false).GetAwaiter().OnCompleted(async () =>
+                PerformGetAndPost(CancellationTokenSource.Token, token, photoSearchOptions, config.ImagegalleryApiConfiguration.Uri, 10, 10, false).ConfigureAwait(false).GetAwaiter().OnCompleted(async () =>
                 {
                     System.Console.WriteLine($"Flickr Total API requests: {ImageSearchService.FlickrQueriesCount}");
                     System.Console.WriteLine($"Flickr Total Bytes: {ImageSearchService.FlickrQueriesBytes}");
@@ -131,7 +124,6 @@ namespace ImageGallery.API.Client.Console
                     //        Metric.StopAndWriteConsole("get");
                     //    }
                     //}
-
                 });
             }
             finally
@@ -147,10 +139,12 @@ namespace ImageGallery.API.Client.Console
         /// <summary>
         /// Uses conveyor queue logic to process images as soon as they are available
         /// </summary>
+        /// <param name="cancellation"></param>
         /// <param name="token">Token</param>
         /// <param name="searchOptions">Flickr Search Options</param>
         /// <param name="apiUri">ImageGallery Api Uri</param>
         /// <param name="threadCount"></param>
+        /// <param name="postThreadCount"></param>
         /// <param name="waitForPostComplete"></param>
         /// <returns>
         ///  A <see cref="Task"/> representing the asynchronous operation.
@@ -186,7 +180,7 @@ namespace ImageGallery.API.Client.Console
                     return "Fail - not configured!";
 
                 ImageSearchService.StartImagesSearchQueue(cancellation, options, threadCount, HttpClient);
-                ThreadsCount = 0;
+                _threadsCount = 0;
 
                 var policy = Policy
                     .Handle<HttpRequestException>()
@@ -198,8 +192,6 @@ namespace ImageGallery.API.Client.Console
                             Log.Error("{@Status} ImageGalleryAPI Web Query Error! Retrying after {ex}", "ERROR", exception.InnerException?.Message ?? exception.Message);
                         });
 
-
-
                 if (token != null) //online
                 {
                     // do while image search is running, image queue is not empty or there are some async tasks left
@@ -207,13 +199,13 @@ namespace ImageGallery.API.Client.Console
                     {
                         if (cancellation.IsCancellationRequested)
                             return "ABORTED";
+
                         // get image from queue
                         if (!ImageSearchService.ImageForCreations.TryDequeue(out var image))
                             continue;
 
                         // wait for available threads
                         while (asyncCount > postThreadCount) // http threads could stuck if there are too many. had to tweak this param
-
                         {
                             await Task.Delay(5);
                         }
@@ -243,7 +235,6 @@ namespace ImageGallery.API.Client.Console
                 }
                 else
                 {
-
                     //local disk
                     while (ImageSearchService.IsSearchRunning || !ImageSearchService.ImageForCreations.IsEmpty || asyncCount > 0)
                     {
@@ -258,6 +249,7 @@ namespace ImageGallery.API.Client.Console
                         {
                             await Task.Delay(5);
                         }
+
                         asyncCount++;
 
                         //run new processing thread
@@ -272,7 +264,9 @@ namespace ImageGallery.API.Client.Console
                                     Log.Error("{@Status} Local Image Save Error {@Image}", "FAIL", image.ToString());
                                 }
                                 else
+                                {
                                     Log.Information("{@Status} Local Image Save COMPLETE {@Image}", "OK", image.ToString());
+                                }
                             }
                             finally
                             {
@@ -324,8 +318,6 @@ namespace ImageGallery.API.Client.Console
                         Log.Information("{@Status} ImageGalleryAPI Post Complete {@Image}", r.Result.StatusCode, image.ToString());
                     r.Result.Dispose();
                 }, cancellation);
-
-
             }
             catch (JsonSerializationException ex)
             {
@@ -364,7 +356,6 @@ namespace ImageGallery.API.Client.Console
                 {
                     var content = await r.Result.Content.ReadAsStringAsync();
                     var images = JsonConvert.DeserializeObject<List<ImageModel>>(content);
-                    //  System.Console.WriteLine(JArray.Parse(content));
                     System.Console.WriteLine($"ImagesCount:{images.Count}");
                     return content;
                 }

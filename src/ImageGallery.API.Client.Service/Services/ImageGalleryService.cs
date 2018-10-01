@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,12 +15,13 @@ using Microsoft.Extensions.Logging;
 using Polly;
 using Serilog;
 
-
 namespace ImageGallery.API.Client.Service.Services
 {
     public class ImageGalleryService : IImageGalleryService
     {
         private readonly IFlickrSearchService _flickrSearchService;
+
+        private readonly object locker = new object();
 
         private readonly Microsoft.Extensions.Logging.ILogger _logger;
 
@@ -42,71 +39,8 @@ namespace ImageGallery.API.Client.Service.Services
 
         protected volatile int LocalFlickrQueriesCount;
 
-        public int FlickrQueriesCount => InternalFlickrQueriesCount + LocalFlickrQueriesCount;
-
-        public ulong FlickrQueriesBytes => InternalFlickrQueriesBytes;
-
-        private readonly object locker = new object();
-
-        private void UpdateFlickrBytes(int value)
-        {
-            lock (locker)
-            {
-                InternalFlickrQueriesBytes += (ulong)value;
-            }
-        }
-
-        public async Task<IEnumerable<ImageForCreation>> GetImagesAsync(int maxImagesCount = 0)
-        {
-            var photoSearchOptions = new PhotoSearchOptions()
-            {
-                MachineTags = "machine_tags => nycparks:",
-                Extras = PhotoSearchExtras.All,
-            };
-
-            List<ImageForCreation> imageForCreations = new List<ImageForCreation>();
-            InternalFlickrQueriesBytes = 0;
-
-            var photos = await _flickrSearchService.SearchPhotosAsync(photoSearchOptions);
-
-            var list = maxImagesCount == 0 ? photos : photos.Take(maxImagesCount);
-            foreach (var photo in list)
-            {
-                var image = new ImageForCreation
-                {
-                    Title = photo.Title,
-                    Category = "Test",
-
-                };
-
-                var photoUrl = photo.Medium640Url;
-                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(photoUrl);
-                HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-                using (Stream inputStream = response.GetResponseStream())
-                {
-                    using (var ms = new MemoryStream())
-                    {
-                        inputStream.CopyTo(ms);
-                        image.Bytes = ms.ToArray();
-                        UpdateFlickrBytes(image.Bytes.Length);
-                    }
-                }
-
-                imageForCreations.Add(image);
-            }
-
-            return imageForCreations;
-        }
-
-        public bool IsSearchRunning
-        {
-            get => _isSearchRunning;
-            private set => _isSearchRunning = value;
-        }
-
-        public ConcurrentQueue<ImageForCreation> ImageForCreations { get; } = new ConcurrentQueue<ImageForCreation>();
-
         private volatile int _asynCounter;
+
         private volatile bool _isSearchRunning;
 
         public void StartImagesSearchQueue(CancellationToken cancellation, SearchOptions options, int maxThreads, HttpClient client)
@@ -143,7 +77,7 @@ namespace ImageGallery.API.Client.Service.Services
                     };
 
                     //start remote queue
-                    await _flickrSearchService.StartPhotosSearchQueueAsync(cancellation, photoSearchOptions).ConfigureAwait(false);
+                    await _flickrSearchService.StartPhotosSearchQueueAsync(photoSearchOptions, cancellation).ConfigureAwait(false);
 
                     var cfg = ConfigurationHelper.GetGeneralConfig();
 
@@ -198,6 +132,26 @@ namespace ImageGallery.API.Client.Service.Services
             });
         }
 
+        public ConcurrentQueue<ImageForCreation> ImageForCreations { get; } = new ConcurrentQueue<ImageForCreation>();
+
+        public bool IsSearchRunning
+        {
+            get => _isSearchRunning;
+            private set => _isSearchRunning = value;
+        }
+
+        public int FlickrQueriesCount => InternalFlickrQueriesCount + LocalFlickrQueriesCount;
+
+        public ulong FlickrQueriesBytes => InternalFlickrQueriesBytes;
+
+        private void UpdateFlickrBytes(int value)
+        {
+            lock (locker)
+            {
+                InternalFlickrQueriesBytes += (ulong)value;
+            }
+        }
+
         private async Task PrepareImage(IAsyncPolicy policy, Photo photo, string size, CancellationToken cancellation)
         {
             var image = new ImageForCreation
@@ -229,7 +183,5 @@ namespace ImageGallery.API.Client.Service.Services
                 Log.Error("{@Status} Flickr Get Image", "ERROR", ex.InnerException?.Message ?? ex.Message);
             }
         }
-
-
     }
 }

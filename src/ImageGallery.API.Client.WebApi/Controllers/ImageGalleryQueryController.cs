@@ -28,8 +28,8 @@ namespace ImageGallery.API.Client.WebApi.Controllers
         public ImageGalleryQueryController(IImageGalleryQueryService imageGalleryQueryService,
             ITokenProvider tokenProvider, IOptionsSnapshot<ApplicationOptions> settings)
         {
-            this._tokenProvider = tokenProvider ?? throw new ArgumentNullException(nameof(imageGalleryQueryService));
-            this._imageGalleryQueryService = imageGalleryQueryService ?? throw new ArgumentNullException(nameof(tokenProvider));
+            this._tokenProvider = tokenProvider ?? throw new ArgumentNullException(nameof(tokenProvider));
+            this._imageGalleryQueryService = imageGalleryQueryService ?? throw new ArgumentNullException(nameof(imageGalleryQueryService));
             _settings = settings.Value.ImagegalleryApiConfiguration;
         }
 

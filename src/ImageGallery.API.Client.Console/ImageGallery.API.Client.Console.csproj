@@ -64,4 +64,8 @@
     <CodeAnalysisRuleSet>$(SolutionDir)../../_stylecop/StyleCopeRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DocumentationFile>D:\Build\ImageGallery.API.Client\src\ImageGallery.API.Client.Console\ImageGallery.API.Client.Console.xml</DocumentationFile>
+  </PropertyGroup>
+
 </Project>

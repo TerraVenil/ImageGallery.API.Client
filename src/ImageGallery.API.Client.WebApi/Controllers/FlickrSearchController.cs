@@ -25,6 +25,7 @@ namespace ImageGallery.API.Client.WebApi.Controllers
         /// 
         /// </summary>
         /// <param name="flickrSearchService"></param>
+        /// <param name="flickrDownloadService"></param>
         public FlickrSearchController(IFlickrSearchService flickrSearchService, IFlickrDownloadService flickrDownloadService)
         {
             _trace = Trace.Create();

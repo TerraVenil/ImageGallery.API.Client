@@ -1,13 +1,15 @@
-﻿using System.Threading;
+﻿using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using IdentityModel.Client;
+using ImageGallery.API.Client.Service.Models;
 
 namespace ImageGallery.API.Client.Service.Interface
 {
     public interface IImageGalleryQueryService
     {
-        Task<string> GetUserImageCollectionAsync(TokenResponse token);
+        Task<List<ImageModel>> GetUserImageCollectionAsync(TokenResponse token);
 
-        Task<string> GetUserImageCollectionAsync(TokenResponse token, CancellationToken cancellation);
+        Task<List<ImageModel>> GetUserImageCollectionAsync(TokenResponse token, CancellationToken cancellation);
     }
 }
