@@ -16,7 +16,7 @@ RUN dotnet restore /p:RestoreUseSkipNonexistentTargets="false"
 
 
 WORKDIR /app/src/ImageGallery.API.Client.WebApi
-RUN dotnet publish -o /publish -c Release -f netcoreapp2.1 -r debian.9-x64
+RUN dotnet publish --no-restore -o /publish -c Release -f netcoreapp2.1 -r debian.9-x64
 
 # Runtime Image Stage
 FROM microsoft/dotnet:2.1-aspnetcore-runtime
