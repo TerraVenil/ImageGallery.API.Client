@@ -38,7 +38,10 @@ namespace ImageGallery.API.Client.Console
 
         private static IImageGalleryService ImageSearchService { get; set; }
 
-        public static int Main(string[] args) => MainAsync(args).GetAwaiter().GetResult();
+        public static int Main(string[] args)
+        {
+            return MainAsync(args).GetAwaiter().GetResult();
+        }
 
         private static async Task<int> MainAsync(string[] args)
         {
