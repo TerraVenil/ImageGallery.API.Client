@@ -69,6 +69,8 @@ namespace ImageGallery.API.Client.WebApi
             services.AddHttpClient("Tracer").AddHttpMessageHandler(provider =>
                 TracingHandler.WithoutInnerHandler(provider.GetService<IConfiguration>()["applicationName"]));
 
+            services.AddHealthChecks();
+
             //Services 
             services.AddScoped<ITokenProvider>(_ => new TokenProvider(config.OpenIdConnectConfiguration));
             services.AddScoped<IFlickrSearchService>(_ => new FlickrSearchService(config.FlickrConfiguration.ApiKey, config.FlickrConfiguration.Secret));
@@ -136,6 +138,9 @@ namespace ImageGallery.API.Client.WebApi
             });
             lifetime.ApplicationStopped.Register(() => TraceManager.Stop());
             app.UseTracing(applicationName);
+
+            // Health Checks
+            app.UseHealthChecks("/health");
 
             // Swagger
             ConfigureSwagger(app);
