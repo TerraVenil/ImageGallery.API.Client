@@ -67,7 +67,7 @@ namespace ImageGallery.API.Client.WebApi.Controllers
                 DataSource = "Flickr"
             };
 
-            await _imageGalleryCommandService.PostImageGalleryApi(token, image);
+            //await _imageGalleryCommandService.PostImageGalleryApi(token, image, null);
 
             return Ok();
         }
