@@ -5,7 +5,7 @@ services:
     container_name: 'api-imagegallery-client-webapi'
     image: stuartshay/imagegallery-api-client:2.1.0-webapi
     environment:
-      - ASPNETCORE_ENVIRONMENT=Docker
+      - ASPNETCORE_ENVIRONMENT=Staging
     ports:
       - 8150:8150
       - 3333:3333
