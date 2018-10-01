@@ -140,7 +140,7 @@ namespace ImageGallery.API.Client.WebApi
             app.UseTracing(applicationName);
 
             // Health Checks
-            app.UseHealthChecks("/health");
+            app.UseHealthChecks("/health", port: 3333);
 
             // Swagger
             ConfigureSwagger(app);

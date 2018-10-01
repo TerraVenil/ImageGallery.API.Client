@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using ImageGallery.API.Client.Service.Configuration;
+using ImageGallery.API.Client.Service.Helpers;
 using ImageGallery.API.Client.Service.Interface;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -42,8 +43,9 @@ namespace ImageGallery.API.Client.WebApi.Controllers
         {
             Console.WriteLine($"{_settings.Login}_{_settings.Password}_{_settings.Api}");
 
-
             var token = await _tokenProvider.RequestResourceOwnerPasswordAsync(_settings.Login, _settings.Password, _settings.Api);
+            token.Show();
+
             var result = await _imageGalleryQueryService.GetUserImageCollectionAsync(token);
 
             return Ok(result);
