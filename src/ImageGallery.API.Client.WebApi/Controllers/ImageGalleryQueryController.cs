@@ -40,6 +40,9 @@ namespace ImageGallery.API.Client.WebApi.Controllers
         [HttpGet]
         public async Task<IActionResult> Get()
         {
+            Console.WriteLine($"{_settings.Login}_{_settings.Password}_{_settings.Api}");
+
+
             var token = await _tokenProvider.RequestResourceOwnerPasswordAsync(_settings.Login, _settings.Password, _settings.Api);
             var result = await _imageGalleryQueryService.GetUserImageCollectionAsync(token);
 
