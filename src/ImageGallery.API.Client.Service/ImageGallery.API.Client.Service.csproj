@@ -32,10 +32,6 @@
     <ProjectReference Include="..\ImageGallery.FlickrService\ImageGallery.FlickrService.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Clients\" />
-  </ItemGroup>
-
 
 
 </Project>

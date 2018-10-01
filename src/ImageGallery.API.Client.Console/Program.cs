@@ -36,6 +36,8 @@ namespace ImageGallery.API.Client.Console
 
         private static ITokenProvider TokenProvider { get; set; }
 
+        private static IImageGalleryCommandService ImageGalleryCommandService { get; set; }
+
         private static IImageGalleryService ImageSearchService { get; set; }
 
         public static int Main(string[] args)
@@ -66,14 +68,14 @@ namespace ImageGallery.API.Client.Console
 
                 //MachineTags = "machine_tags => nycparks:",
                 //MachineTags = "machine_tags => nychalloffame:",
-                MachineTags = "machine_tags => nycparks:m010=",
-                //MachineTags = "machine_tags => nycparks:m089=",
+                //MachineTags = "machine_tags => nycparks:m010=",
+                MachineTags = "machine_tags => nycparks:m089=",
                 //MachineTags = "machine_tags => nycparks:q436=",
                 // MachineTags = "machine_tags => nycparks:m010=114",
                 // UserId = "",
                 //PhotoSize = "q",   //150x150
                 //PhotoSize = "z",   // Medium 640
-                PhotoSize = "q",   //width="1024" height="768
+                PhotoSize = "q", //width="1024" height="768
             };
 
             TokenResponse token = null;
@@ -82,7 +84,9 @@ namespace ImageGallery.API.Client.Console
                 try
                 {
                     Metric.Start("token");
-                    token = await TokenProvider.RequestResourceOwnerPasswordAsync(config.ImagegalleryApiConfiguration.Login, config.ImagegalleryApiConfiguration.Password, config.ImagegalleryApiConfiguration.Api);
+                    token = await TokenProvider.RequestResourceOwnerPasswordAsync(
+                        config.ImagegalleryApiConfiguration.Login, config.ImagegalleryApiConfiguration.Password,
+                        config.ImagegalleryApiConfiguration.Api);
                     if (token == null)
                     {
                         Log.Error("Token Request Failed. The app will close now.");
@@ -104,30 +108,32 @@ namespace ImageGallery.API.Client.Console
                 // start processing
                 // waitForPostComplete is true by default, waiting when image has finished upload
                 //  if we don't need to wait (e.g. no afterward actions are needed) we can set it to false to speed up even more
-                PerformGetAndPost(CancellationTokenSource.Token, token, photoSearchOptions, config.ImagegalleryApiConfiguration.Uri, 10, 10, false).ConfigureAwait(false).GetAwaiter().OnCompleted(async () =>
-                {
-                    System.Console.WriteLine($"Flickr Total API requests: {ImageSearchService.FlickrQueriesCount}");
-                    System.Console.WriteLine($"Flickr Total Bytes: {ImageSearchService.FlickrQueriesBytes}");
-                    System.Console.WriteLine($"Total Photos Valid: XXXX");
-                    System.Console.WriteLine($"Total Photos Flaged: XXXX");
-                    for (int i = 0; i < 5; i++)
+                PerformGetAndPost(CancellationTokenSource.Token, token, photoSearchOptions,
+                        config.ImagegalleryApiConfiguration.Uri, 10, 10, false).ConfigureAwait(false).GetAwaiter()
+                    .OnCompleted(async () =>
                     {
-                        System.Console.WriteLine($"Dummy Photo Flaged PhotoId:{0}", i);
-                    }
+                        System.Console.WriteLine($"Flickr Total API requests: {ImageSearchService.FlickrQueriesCount}");
+                        System.Console.WriteLine($"Flickr Total Bytes: {ImageSearchService.FlickrQueriesBytes}");
+                        System.Console.WriteLine($"Total Photos Valid: XXXX");
+                        System.Console.WriteLine($"Total Photos Flaged: XXXX");
+                        for (int i = 0; i < 5; i++)
+                        {
+                            System.Console.WriteLine($"Dummy Photo Flaged PhotoId:{0}", i);
+                        }
 
-                    //if (!isLocalDiskOnly && !CSource.IsCancellationRequested)
-                    //{
-                    //    try
-                    //    {
-                    //        Metric.Start("get");
-                    //        await GetImageGalleryApi(CSource.Token, token, imageGalleryApi);
-                    //    }
-                    //    finally
-                    //    {
-                    //        Metric.StopAndWriteConsole("get");
-                    //    }
-                    //}
-                });
+                        //if (!isLocalDiskOnly && !CSource.IsCancellationRequested)
+                        //{
+                        //    try
+                        //    {
+                        //        Metric.Start("get");
+                        //        await GetImageGalleryApi(CSource.Token, token, imageGalleryApi);
+                        //    }
+                        //    finally
+                        //    {
+                        //        Metric.StopAndWriteConsole("get");
+                        //    }
+                        //}
+                    });
             }
             finally
             {
@@ -152,7 +158,8 @@ namespace ImageGallery.API.Client.Console
         /// <returns>
         ///  A <see cref="Task"/> representing the asynchronous operation.
         /// </returns>
-        private static async Task<string> PerformGetAndPost(CancellationToken cancellation, TokenResponse token, SearchOptions searchOptions, string apiUri, int threadCount, int postThreadCount, bool waitForPostComplete)
+        private static async Task<string> PerformGetAndPost(CancellationToken cancellation, TokenResponse token,
+            SearchOptions searchOptions, string apiUri, int threadCount, int postThreadCount, bool waitForPostComplete)
         {
             var limit = System.Net.ServicePointManager.DefaultConnectionLimit;
             System.Net.ServicePointManager.DefaultConnectionLimit = 5;
@@ -189,16 +196,19 @@ namespace ImageGallery.API.Client.Console
                     .Handle<HttpRequestException>()
                     .WaitAndRetryAsync(
                         retryCount: cfg.QueryRetriesCount, // Retry 3 times
-                        sleepDurationProvider: attempt => TimeSpan.FromMilliseconds(cfg.QueryWaitBetweenQueries), // Wait 200ms between each try.
+                        sleepDurationProvider: attempt =>
+                            TimeSpan.FromMilliseconds(cfg.QueryWaitBetweenQueries), // Wait 200ms between each try.
                         onRetry: (exception, calculatedWaitDuration) => // Capture some info for logging!
                         {
-                            Log.Error("{@Status} ImageGalleryAPI Web Query Error! Retrying after {ex}", "ERROR", exception.InnerException?.Message ?? exception.Message);
+                            Log.Error("{@Status} ImageGalleryAPI Web Query Error! Retrying after {ex}", "ERROR",
+                                exception.InnerException?.Message ?? exception.Message);
                         });
 
                 if (token != null) //online
                 {
                     // do while image search is running, image queue is not empty or there are some async tasks left
-                    while (ImageSearchService.IsSearchRunning || !ImageSearchService.ImageForCreations.IsEmpty || asyncCount > 0)
+                    while (ImageSearchService.IsSearchRunning || !ImageSearchService.ImageForCreations.IsEmpty ||
+                           asyncCount > 0)
                     {
                         if (cancellation.IsCancellationRequested)
                             return "ABORTED";
@@ -208,7 +218,8 @@ namespace ImageGallery.API.Client.Console
                             continue;
 
                         // wait for available threads
-                        while (asyncCount > postThreadCount) // http threads could stuck if there are too many. had to tweak this param
+                        while (asyncCount > postThreadCount
+                        ) // http threads could stuck if there are too many. had to tweak this param
                         {
                             await Task.Delay(5);
                         }
@@ -222,11 +233,13 @@ namespace ImageGallery.API.Client.Console
                                 return;
                             try
                             {
-                                await PostImageGalleryApi(HttpClient, policy, image, apiUri, waitForPostComplete, cancellation);
+                                await ImageGalleryCommandService.PostImageGalleryApi(token, image, cancellation);
+                                // await PostImageGalleryApi(HttpClient, policy, image, apiUri, waitForPostComplete, cancellation);
                             }
                             catch (Exception ex)
                             {
-                                Log.Error("{@Status} ImageGalleryAPI Post (WEB)Error {@Image}", "FAIL", image.ToString());
+                                Log.Error("{@Status} ImageGalleryAPI Post (WEB)Error {@Image}", "FAIL",
+                                    image.ToString());
                             }
                             finally
                             {
@@ -239,7 +252,8 @@ namespace ImageGallery.API.Client.Console
                 else
                 {
                     //local disk
-                    while (ImageSearchService.IsSearchRunning || !ImageSearchService.ImageForCreations.IsEmpty || asyncCount > 0)
+                    while (ImageSearchService.IsSearchRunning || !ImageSearchService.ImageForCreations.IsEmpty ||
+                           asyncCount > 0)
                     {
                         if (cancellation.IsCancellationRequested)
                             return "ABORTED";
@@ -248,7 +262,8 @@ namespace ImageGallery.API.Client.Console
                             continue;
                         // wait for available threads
 
-                        while (asyncCount > threadCount) // http threads could stuck if there are too many. had to tweak this param
+                        while (asyncCount > threadCount
+                        ) // http threads could stuck if there are too many. had to tweak this param
                         {
                             await Task.Delay(5);
                         }
@@ -268,7 +283,8 @@ namespace ImageGallery.API.Client.Console
                                 }
                                 else
                                 {
-                                    Log.Information("{@Status} Local Image Save COMPLETE {@Image}", "OK", image.ToString());
+                                    Log.Information("{@Status} Local Image Save COMPLETE {@Image}", "OK",
+                                        image.ToString());
                                 }
                             }
                             finally
@@ -300,8 +316,8 @@ namespace ImageGallery.API.Client.Console
         /// <param name="waitForPostComplete"></param>
         /// <param name="cancellation"></param>
         /// <returns></returns>
-        private static async Task PostImageGalleryApi(HttpClient client, RetryPolicy policy, ImageForCreation image, string apiUri, bool waitForPostComplete,
-            CancellationToken cancellation)
+        private static async Task PostImageGalleryApi(HttpClient client, RetryPolicy policy, ImageForCreation image,
+            string apiUri, bool waitForPostComplete, CancellationToken cancellation)
         {
             Log.Verbose("ImageGalleryAPI Post {@Image}| {FileSize}", image.ToString(), image.Bytes.Length);
 
@@ -316,9 +332,11 @@ namespace ImageGallery.API.Client.Console
                     .ConfigureAwait(waitForPostComplete), cancellation).ContinueWith(r =>
                 {
                     if (!r.Result.IsSuccessStatusCode)
-                        Log.Error("{@Status} ImageGalleryAPI Post Error {@Image}", r.Result.StatusCode.ToString(), image.ToString());
+                        Log.Error("{@Status} ImageGalleryAPI Post Error {@Image}", r.Result.StatusCode.ToString(),
+                            image.ToString());
                     else
-                        Log.Information("{@Status} ImageGalleryAPI Post Complete {@Image}", r.Result.StatusCode, image.ToString());
+                        Log.Information("{@Status} ImageGalleryAPI Post Complete {@Image}", r.Result.StatusCode,
+                            image.ToString());
                     r.Result.Dispose();
                 }, cancellation);
             }
@@ -344,27 +362,31 @@ namespace ImageGallery.API.Client.Console
         /// <param name="token"></param>
         /// <param name="imageGalleryApi"></param>
         /// <returns></returns>
-        private static async Task<string> GetUserImageCollectionAsync(Policy policy, CancellationToken cancellation, TokenResponse token, string imageGalleryApi)
+        private static async Task<string> GetUserImageCollectionAsync(Policy policy, CancellationToken cancellation,
+            TokenResponse token, string imageGalleryApi)
         {
             // call api
             HttpClient.SetBearerToken(token.AccessToken);
 
-            var c = await policy.ExecuteAsync(async t => await HttpClient.GetAsync($"{imageGalleryApi}/api/images", t), cancellation).ContinueWith(async r =>
-            {
-                if (!r.Result.IsSuccessStatusCode)
+            var c = await policy
+                .ExecuteAsync(async t => await HttpClient.GetAsync($"{imageGalleryApi}/api/images", t), cancellation)
+                .ContinueWith(async r =>
                 {
-                    System.Console.WriteLine(r.Result.StatusCode);
-                }
-                else
-                {
-                    var content = await r.Result.Content.ReadAsStringAsync();
-                    var images = JsonConvert.DeserializeObject<List<ImageModel>>(content);
-                    System.Console.WriteLine($"ImagesCount:{images.Count}");
-                    return content;
-                }
-                r.Dispose();
-                return null;
-            }, cancellation);
+                    if (!r.Result.IsSuccessStatusCode)
+                    {
+                        System.Console.WriteLine(r.Result.StatusCode);
+                    }
+                    else
+                    {
+                        var content = await r.Result.Content.ReadAsStringAsync();
+                        var images = JsonConvert.DeserializeObject<List<ImageModel>>(content);
+                        System.Console.WriteLine($"ImagesCount:{images.Count}");
+                        return content;
+                    }
+
+                    r.Dispose();
+                    return null;
+                }, cancellation);
 
             return c.Result;
         }
@@ -392,15 +414,23 @@ namespace ImageGallery.API.Client.Console
 
                 var config = ConfigurationHelper.Configuration.Get<ApplicationOptions>();
 
+                // Register Http Client
+                serviceCollection.AddHttpClient<IImageGalleryCommandService, ImageGalleryCommandService>(client =>
+                    client.BaseAddress = new Uri(config.ImagegalleryApiConfiguration.Uri));
+
                 var serviceProvider = new ServiceCollection()
                     .AddScoped<ITokenProvider>(_ => new TokenProvider(config.OpenIdConnectConfiguration))
-                    .AddScoped<IFlickrSearchService>(_ => new FlickrSearchService(config.FlickrConfiguration.ApiKey, config.FlickrConfiguration.Secret))
+                    .AddScoped<IFlickrSearchService>(_ =>
+                        new FlickrSearchService(config.FlickrConfiguration.ApiKey, config.FlickrConfiguration.Secret))
                     .AddScoped<IImageGalleryService, ImageGalleryService>()
+                    .AddScoped<IImageGalleryCommandService, ImageGalleryCommandService>()
                     .AddLogging()
+                    .AddHttpClient()
                     .BuildServiceProvider();
 
                 TokenProvider = serviceProvider.GetRequiredService<ITokenProvider>();
                 ImageSearchService = serviceProvider.GetRequiredService<IImageGalleryService>();
+                ImageGalleryCommandService = serviceProvider.GetRequiredService<IImageGalleryCommandService>();
 
                 var flickrSearchService = serviceProvider.GetRequiredService<IFlickrSearchService>();
                 flickrSearchService.RetriesCount = config.GeneralConfiguration.QueryRetriesCount;
