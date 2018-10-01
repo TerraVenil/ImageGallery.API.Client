@@ -1,6 +1,7 @@
 ﻿using FlickrNet;
 using ImageGallery.API.Client.Test.Fixtures;
 using ImageGallery.FlickrService;
+using ImageGallery.FlickrService.Helpers;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -34,6 +35,18 @@ namespace ImageGallery.API.Client.Test.Flickr
         }
 
         [Theory]
+        [InlineData("9250911801", "n")]
+        public async void Can_Get_Photo_Url(string photoId, string size)
+        {
+            var photoInfo = await _flickrSearchService.GetPhotoInfoAsync(photoId);
+            var url = photoInfo.GetPhotoUrl(size);
+
+            Assert.NotNull(photoInfo);
+            Assert.NotNull(url);
+        }
+
+
+        [Theory]
         [InlineData("machine_tags => nychalloffame:")]
         public async void Can_Search_Photos_by_MachineTag_Namespace(string namespaceQuery)
         {
@@ -41,6 +54,7 @@ namespace ImageGallery.API.Client.Test.Flickr
             {
                 MachineTags = namespaceQuery,
                 Extras = PhotoSearchExtras.All,
+
             };
 
             var photoCollection = await _flickrSearchService.SearchPhotosAsync(photoSearchOptions);

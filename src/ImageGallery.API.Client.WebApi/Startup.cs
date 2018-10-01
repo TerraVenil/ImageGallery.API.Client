@@ -54,17 +54,7 @@ namespace ImageGallery.API.Client.WebApi
             var config = ConfigurationHelper.Configuration.Get<ApplicationOptions>();
 
             // Swagger
-            services.AddSwaggerGen(options =>
-            {
-                options.SwaggerDoc("v1", new Info
-                {
-                    Title = "ImageGallery.API.Client.WebApi",
-                    Description = "ImageGallery.API.Client.WebApi",
-                    Version = "v1",
-                    TermsOfService = "None",
-                });
-                options.IncludeXmlComments(GetXmlCommentsPath());
-            });
+            services.AddCustomSwagger(Configuration);
 
             // AppMetrics
             services.AddMetrics();
@@ -83,6 +73,7 @@ namespace ImageGallery.API.Client.WebApi
             services.AddScoped<IFlickrSearchService>(_ => new FlickrSearchService(config.FlickrConfiguration.ApiKey, config.FlickrConfiguration.Secret));
             services.AddScoped<IImageGalleryCommandService, ImageGalleryCommandService>();
             services.AddScoped<IImageGalleryQueryService, ImageGalleryQueryService>();
+            services.AddScoped<IFlickrDownloadService, FlickrDownloadService>();
 
             //Retry Policy
             var retryPolicy = Policy.TimeoutAsync<HttpResponseMessage>(TimeSpan.FromSeconds(10));
@@ -91,7 +82,7 @@ namespace ImageGallery.API.Client.WebApi
             // Web Client - ImageGalleryCommandService
             services.AddHttpClient<IImageGalleryCommandService, ImageGalleryCommandService>(client =>
             {
-                client.BaseAddress = new Uri("https://imagegallery-api.informationcart.com");
+                client.BaseAddress = new Uri(config.ImagegalleryApiConfiguration.Uri);
             })
                 .AddPolicyHandler(retryPolicy)
                 .AddTransientHttpErrorPolicy(p => p.RetryAsync(3));
@@ -99,8 +90,13 @@ namespace ImageGallery.API.Client.WebApi
             // Web Client - ImageGalleryQueryService
             services.AddHttpClient<IImageGalleryQueryService, ImageGalleryQueryService>(client =>
                 {
-                    client.BaseAddress = new Uri("https://imagegallery-api.informationcart.com");
+                    client.BaseAddress = new Uri(config.ImagegalleryApiConfiguration.Uri);
                 })
+                .AddPolicyHandler(retryPolicy)
+                .AddTransientHttpErrorPolicy(p => p.RetryAsync(3));
+
+            // Web Client - FlickrDownloadService
+            services.AddHttpClient<IFlickrDownloadService, FlickrDownloadService>(client => { })
                 .AddPolicyHandler(retryPolicy)
                 .AddTransientHttpErrorPolicy(p => p.RetryAsync(3));
 
@@ -146,15 +142,6 @@ namespace ImageGallery.API.Client.WebApi
             app.UseMvc();
         }
 
-        private static string GetXmlCommentsPath()
-        {
-            var basePath = AppContext.BaseDirectory;
-            var assemblyName = System.Reflection.Assembly.GetEntryAssembly().GetName().Name;
-            var fileName = Path.GetFileName(assemblyName + ".xml");
-
-            return Path.Combine(basePath, fileName);
-        }
-
         private void ConfigureSwagger(IApplicationBuilder app)
         {
             app.UseSwagger();
@@ -165,18 +152,37 @@ namespace ImageGallery.API.Client.WebApi
         }
     }
 
-    public static class ServiceCollectionExtensions
+    /// <summary>
+    /// 
+    /// </summary>
+    static class ServiceCollectionExtensions
     {
-        private static IServiceCollection AddHttpServices(this IServiceCollection services)
+        public static IServiceCollection AddCustomSwagger(this IServiceCollection services,
+            IConfiguration configuration)
         {
-            services.AddHttpClient<IImageGalleryQueryService, ImageGalleryQueryService>(client =>
+            services.AddSwaggerGen(options =>
             {
-                client.BaseAddress = new Uri("https://api.github.com/");
+                options.SwaggerDoc("v1", new Info
+                {
+                    Title = "ImageGallery.API.Client.WebApi",
+                    Description = "ImageGallery.API.Client.WebApi",
+                    Version = "v1",
+                    TermsOfService = "None",
+                });
+                options.IncludeXmlComments(GetXmlCommentsPath());
             });
 
             return services;
         }
-    }
 
+        private static string GetXmlCommentsPath()
+        {
+            var basePath = AppContext.BaseDirectory;
+            var assemblyName = System.Reflection.Assembly.GetEntryAssembly().GetName().Name;
+            var fileName = Path.GetFileName(assemblyName + ".xml");
+
+            return Path.Combine(basePath, fileName);
+        }
+    }
 
 }

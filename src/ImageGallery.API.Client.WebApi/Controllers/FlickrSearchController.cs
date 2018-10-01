@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
+using ImageGallery.API.Client.Service.Interface;
 using ImageGallery.FlickrService;
+using ImageGallery.FlickrService.Helpers;
 using Microsoft.AspNetCore.Mvc;
 using zipkin4net;
 
@@ -15,16 +17,19 @@ namespace ImageGallery.API.Client.WebApi.Controllers
     {
         private readonly IFlickrSearchService _flickrSearchService;
 
+        private readonly IFlickrDownloadService _flickrDownloadService;
+
         private readonly Trace _trace;
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="flickrSearchService"></param>
-        public FlickrSearchController(IFlickrSearchService flickrSearchService)
+        public FlickrSearchController(IFlickrSearchService flickrSearchService, IFlickrDownloadService flickrDownloadService)
         {
             _trace = Trace.Create();
             _flickrSearchService = flickrSearchService ?? throw new ArgumentNullException(nameof(flickrSearchService));
+            _flickrDownloadService = flickrDownloadService ?? throw new ArgumentNullException(nameof(flickrDownloadService));
         }
 
 
@@ -43,5 +48,23 @@ namespace ImageGallery.API.Client.WebApi.Controllers
 
             return Ok(result);
         }
+
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpPost("{id}")]
+        public async Task<IActionResult> PostFlickrImage(string id)
+        {
+            var size = "n";
+            var photoInfo = await _flickrSearchService.GetPhotoInfoAsync(id);
+            var url = photoInfo.GetPhotoUrl(size);
+
+            var result = await _flickrDownloadService.GetFlickrImageAsync(url);
+            return Ok();
+        }
+
     }
 }

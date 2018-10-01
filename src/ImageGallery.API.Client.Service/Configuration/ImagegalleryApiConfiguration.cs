@@ -11,5 +11,20 @@ namespace ImageGallery.API.Client.Service.Configuration
         /// </summary>
         public string Uri { get; set; }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        public string Api { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string Login { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string Password { get; set; }
+
     }
 }

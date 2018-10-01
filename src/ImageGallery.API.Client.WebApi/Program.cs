@@ -52,23 +52,18 @@ namespace ImageGallery.API.Client.WebApi
                         options.EndpointOptions = endpointsOptions =>
                         {
                             endpointsOptions.MetricsTextEndpointOutputFormatter = new MetricsPrometheusTextOutputFormatter();
-                            endpointsOptions.MetricsEndpointOutputFormatter = new MetricsPrometheusProtobufOutputFormatter();
                         };
                     })
                 .ConfigureMetrics(options =>
                 {
                     options.OutputMetrics.AsPrometheusPlainText();
-                    options.OutputMetrics.AsPrometheusProtobuf();
                 })
                 .ConfigureAppMetricsHostingConfiguration(options =>
                 {
                     options.AllEndpointsPort = 3333;
                     options.EnvironmentInfoEndpoint = "/env";
-                    // options.EnvironmentInfoEndpointPort = 1111;
                     options.MetricsEndpoint = "/metrics";
-                    // options.MetricsEndpointPort = 2222;
                     options.MetricsTextEndpoint = "/metrics-text";
-                    //options.MetricsTextEndpointPort = 3333;
                 });
 
     }
