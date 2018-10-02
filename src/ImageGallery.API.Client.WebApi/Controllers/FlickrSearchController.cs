@@ -1,9 +1,14 @@
 ﻿using System;
+using System.Globalization;
 using System.Threading.Tasks;
+using FlickrNet;
+using ImageGallery.API.Client.Service.Classes;
 using ImageGallery.API.Client.Service.Interface;
 using ImageGallery.FlickrService;
 using ImageGallery.FlickrService.Helpers;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using Serilog;
 using zipkin4net;
 
 namespace ImageGallery.API.Client.WebApi.Controllers
@@ -19,6 +24,8 @@ namespace ImageGallery.API.Client.WebApi.Controllers
 
         private readonly IFlickrDownloadService _flickrDownloadService;
 
+        private readonly ILogger<FlickrSearchController> _logger;
+
         private readonly Trace _trace;
 
         /// <summary>
@@ -26,11 +33,13 @@ namespace ImageGallery.API.Client.WebApi.Controllers
         /// </summary>
         /// <param name="flickrSearchService"></param>
         /// <param name="flickrDownloadService"></param>
-        public FlickrSearchController(IFlickrSearchService flickrSearchService, IFlickrDownloadService flickrDownloadService)
+        public FlickrSearchController(IFlickrSearchService flickrSearchService,
+            IFlickrDownloadService flickrDownloadService, ILogger<FlickrSearchController> logger)
         {
             _trace = Trace.Create();
             _flickrSearchService = flickrSearchService ?? throw new ArgumentNullException(nameof(flickrSearchService));
             _flickrDownloadService = flickrDownloadService ?? throw new ArgumentNullException(nameof(flickrDownloadService));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
 
@@ -56,15 +65,34 @@ namespace ImageGallery.API.Client.WebApi.Controllers
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        [HttpPost("{id}")]
-        public async Task<IActionResult> PostFlickrImage(string id)
+        [HttpPost()]
+        public async Task<IActionResult> PostFlickrImage()
         {
-            var size = "n";
-            var photoInfo = await _flickrSearchService.GetPhotoInfoAsync(id);
-            var url = photoInfo.GetPhotoUrl(size);
+            PhotoSearchOptions photoSearchOptions = new PhotoSearchOptions
+            {
+                // See for List of Available Machine Tags
+                //https://api-attractions.navigatorglass.com/swagger/#!/MachineKey/ApiMachineKeyPredicatesGet
 
-            var result = await _flickrDownloadService.GetFlickrImageAsync(url);
-            return Ok();
+                MachineTags = "machine_tags => nycparks:",
+                //MachineTags = "machine_tags => nychalloffame:",
+                //MachineTags = "machine_tags => nycparks:m010=",
+                //MachineTags = "machine_tags => nycparks:m089=",
+                //MachineTags = "machine_tags => nycparks:q436=",
+                // MachineTags = "machine_tags => nycparks:m010=114",
+                // UserId = "",
+                //PhotoSize = "q",   //150x150
+                //PhotoSize = "z",   // Medium 640
+                //PhotoSize = "q", //width="1024" height="768
+            };
+
+            Log.Error("Begin Zipkin Trace Here");
+            var photos = await _flickrSearchService.SearchPhotosAsync(photoSearchOptions);
+            _logger.LogInformation("Total Photos:{PhotoCount}", photos.Count);
+
+
+            HttpContext.Response.Headers.Add("Access-Control-Expose-Headers", "X-InlineCount");
+            HttpContext.Response.Headers.Add("X-InlineCount", photos.Count.ToString(CultureInfo.InvariantCulture));
+            return Ok(photos);
         }
 
     }

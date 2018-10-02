@@ -66,10 +66,10 @@ namespace ImageGallery.API.Client.Console
                 // See for List of Available Machine Tags
                 //https://api-attractions.navigatorglass.com/swagger/#!/MachineKey/ApiMachineKeyPredicatesGet
 
-                MachineTags = "machine_tags => nycparks:",
+                //MachineTags = "machine_tags => nycparks:",
                 //MachineTags = "machine_tags => nychalloffame:",
                 //MachineTags = "machine_tags => nycparks:m010=",
-                // MachineTags = "machine_tags => nycparks:m089=",
+                MachineTags = "machine_tags => nycparks:m089=",
                 //MachineTags = "machine_tags => nycparks:q436=",
                 // MachineTags = "machine_tags => nycparks:m010=114",
                 // UserId = "",

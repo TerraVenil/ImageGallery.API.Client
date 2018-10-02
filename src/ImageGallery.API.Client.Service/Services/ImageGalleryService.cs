@@ -152,12 +152,10 @@ namespace ImageGallery.API.Client.Service.Services
                 image.Bytes = await _flickrDownloadService.GetFlickrImageAsync(photo.GetPhotoUrl(size), cancellation);
                 UpdateFlickrBytes(image.Bytes.Length);
 
-                //put image into queue
                 ImageForCreations.Enqueue(image);
             }
             catch (Exception ex)
             {
-                //TODO handle error
                 Log.Error("{@Status} Flickr Get Image", "ERROR", ex.InnerException?.Message ?? ex.Message);
             }
         }

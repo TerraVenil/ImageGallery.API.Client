@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Diagnostics;
 using App.Metrics;
 using App.Metrics.AspNetCore;
 using App.Metrics.Formatters.Prometheus;
 using ImageGallery.API.Client.Service.Helpers;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
+using Serilog;
+using Serilog.Sinks.SystemConsole.Themes;
 
 namespace ImageGallery.API.Client.WebApi
 {
@@ -20,6 +23,18 @@ namespace ImageGallery.API.Client.WebApi
         /// <returns></returns>
         public static int Main(string[] args)
         {
+            Log.Logger = new LoggerConfiguration()
+                .ReadFrom.Configuration(ConfigurationHelper.Configuration)
+                .WriteTo.Console(theme: SystemConsoleTheme.Literate)
+                .CreateLogger();
+
+            Serilog.Debugging.SelfLog.Enable(msg =>
+            {
+                Log.Information("Init:ImageGallery.API.Client.WebApi");
+                Debug.Print(msg);
+                Debugger.Break();
+            });
+
             try
             {
                 CreateWebHostBuilder(args).Build().Run();
@@ -27,12 +42,12 @@ namespace ImageGallery.API.Client.WebApi
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
+                Log.Fatal(ex, "Host terminated unexpectedly");
                 return 1;
             }
             finally
             {
-
+                Log.CloseAndFlush();
             }
         }
 
@@ -46,14 +61,14 @@ namespace ImageGallery.API.Client.WebApi
                 .UseConfiguration(ConfigurationHelper.Configuration)
                 .UseUrls("http://*:8150")
                 .UseStartup<Startup>()
-                .UseMetrics(
-                    options =>
-                    {
-                        options.EndpointOptions = endpointsOptions =>
-                        {
-                            endpointsOptions.MetricsTextEndpointOutputFormatter = new MetricsPrometheusTextOutputFormatter();
-                        };
-                    })
+                .UseSerilog()
+                .UseMetrics(options =>
+                 {
+                     options.EndpointOptions = endpointsOptions =>
+                     {
+                         endpointsOptions.MetricsTextEndpointOutputFormatter = new MetricsPrometheusTextOutputFormatter();
+                     };
+                 })
                 .ConfigureMetrics(options =>
                 {
                     options.OutputMetrics.AsPrometheusPlainText();

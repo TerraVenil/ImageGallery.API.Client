@@ -59,16 +59,12 @@ namespace ImageGallery.API.Client.WebApi
 
             // AppMetrics
             services.AddMetrics();
-            //https://github.com/powerumc/microservice-architecture-quick-start/tree/6a5515301d5f2d26ce21f927535dce2bb02ae49f
-            //https://github.com/dotnet-architecture/eShopOnContainers/blob/dev/src/Services/Payment/Payment.API/Program.cs
-            //https://www.app-metrics.io/web-monitoring/aspnet-core/quick-start/
-            //https://github.com/fs7744/DataAccess/tree/master/src
-            //https://github.com/fs7744/DataAccess/blob/master/src/VIC.DataAccess.Zipkin/DataAccessZipkinTrace.cs
 
             //Zipkin
             services.AddHttpClient("Tracer").AddHttpMessageHandler(provider =>
                 TracingHandler.WithoutInnerHandler(provider.GetService<IConfiguration>()["applicationName"]));
 
+            // Health Checks 
             services.AddHealthChecks();
 
             //Services 
@@ -76,30 +72,7 @@ namespace ImageGallery.API.Client.WebApi
             services.AddScoped<IFlickrSearchService>(_ => new FlickrSearchService(config.FlickrConfiguration.ApiKey, config.FlickrConfiguration.Secret));
             services.AddScoped<IFlickrDownloadService, FlickrDownloadService>();
 
-            //Retry Policy
-            var retryPolicy = Policy.TimeoutAsync<HttpResponseMessage>(TimeSpan.FromSeconds(10));
-            services.AddHttpClient();
-
-            // Web Client - ImageGalleryCommandService
-            services.AddHttpClient<IImageGalleryCommandService, ImageGalleryCommandService>(client =>
-            {
-                client.BaseAddress = new Uri(config.ImagegalleryApiConfiguration.Uri);
-            })
-                .AddPolicyHandler(retryPolicy)
-                .AddTransientHttpErrorPolicy(p => p.RetryAsync(3));
-
-            // Web Client - ImageGalleryQueryService
-            services.AddHttpClient<IImageGalleryQueryService, ImageGalleryQueryService>(client =>
-                {
-                    client.BaseAddress = new Uri(config.ImagegalleryApiConfiguration.Uri);
-                })
-                .AddPolicyHandler(retryPolicy)
-                .AddTransientHttpErrorPolicy(p => p.RetryAsync(3));
-
-            // Web Client - FlickrDownloadService
-            services.AddHttpClient<IFlickrDownloadService, FlickrDownloadService>(client => { })
-                .AddPolicyHandler(retryPolicy)
-                .AddTransientHttpErrorPolicy(p => p.RetryAsync(3));
+            services.AddCustomHttpServices(Configuration);
 
             services.AddMvc();
         }
@@ -113,8 +86,6 @@ namespace ImageGallery.API.Client.WebApi
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
             var config = Configuration.Get<ApplicationOptions>();
-
-            var applicationName = typeof(Program).Assembly.GetName().Name;
             loggerFactory.AddConsole();
 
             if (env.IsDevelopment())
@@ -122,7 +93,32 @@ namespace ImageGallery.API.Client.WebApi
                 app.UseDeveloperExceptionPage();
             }
 
+            app.UseHealthChecks("/health", port: 3333);
+
+            ConfigureZipkin(app, loggerFactory);
+            ConfigureSwagger(app);
+
+            app.UseMvc();
+        }
+
+        private void ConfigureSwagger(IApplicationBuilder app)
+        {
+            Guard.ThrowIfNull(app, nameof(app));
+
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "ImageGallery.API.Client.WebApi V1");
+            });
+        }
+
+        private void ConfigureZipkin(IApplicationBuilder app, ILoggerFactory loggerFactory)
+        {
+            var config = Configuration.Get<ApplicationOptions>();
+
             // Zipkin
+            var applicationName = typeof(Program).Assembly.GetName().Name;
+
             var lifetime = app.ApplicationServices.GetService<IApplicationLifetime>();
             lifetime.ApplicationStarted.Register(() =>
             {
@@ -135,24 +131,8 @@ namespace ImageGallery.API.Client.WebApi
                 TraceManager.Start(logger);
             });
             lifetime.ApplicationStopped.Register(() => TraceManager.Stop());
+
             app.UseTracing(applicationName);
-
-            // Health Checks
-            app.UseHealthChecks("/health", port: 3333);
-
-            // Swagger
-            ConfigureSwagger(app);
-
-            app.UseMvc();
-        }
-
-        private void ConfigureSwagger(IApplicationBuilder app)
-        {
-            app.UseSwagger();
-            app.UseSwaggerUI(c =>
-            {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "ImageGallery.API.Client.WebApi V1");
-            });
         }
     }
 
@@ -179,6 +159,40 @@ namespace ImageGallery.API.Client.WebApi
             return services;
         }
 
+        public static IServiceCollection AddCustomHttpServices(this IServiceCollection services,
+            IConfiguration configuration)
+        {
+            var config = configuration.Get<ApplicationOptions>();
+
+            //Retry Policy
+            var retryPolicy = Policy.TimeoutAsync<HttpResponseMessage>(TimeSpan.FromSeconds(10));
+            services.AddHttpClient();
+
+
+            // Web Client - ImageGalleryCommandService
+            services.AddHttpClient<IImageGalleryCommandService, ImageGalleryCommandService>(client =>
+                {
+                    client.BaseAddress = new Uri(config.ImagegalleryApiConfiguration.Uri);
+                })
+                .AddPolicyHandler(retryPolicy)
+                .AddTransientHttpErrorPolicy(p => p.RetryAsync(3));
+
+            // Web Client - ImageGalleryQueryService
+            services.AddHttpClient<IImageGalleryQueryService, ImageGalleryQueryService>(client =>
+                {
+                    client.BaseAddress = new Uri(config.ImagegalleryApiConfiguration.Uri);
+                })
+                .AddPolicyHandler(retryPolicy)
+                .AddTransientHttpErrorPolicy(p => p.RetryAsync(3));
+
+            // Web Client - FlickrDownloadService
+            services.AddHttpClient<IFlickrDownloadService, FlickrDownloadService>(client => { })
+                .AddPolicyHandler(retryPolicy)
+                .AddTransientHttpErrorPolicy(p => p.RetryAsync(3));
+
+            return services;
+        }
+
         private static string GetXmlCommentsPath()
         {
             var basePath = AppContext.BaseDirectory;
@@ -189,4 +203,6 @@ namespace ImageGallery.API.Client.WebApi
         }
     }
 
+    //https://github.com/powerumc/microservice-architecture-quick-start/tree/6a5515301d5f2d26ce21f927535dce2bb02ae49f
+    //https://github.com/dotnet-architecture/eShopOnContainers/blob/dev/src/Services/Payment/Payment.API/Program.cs
 }

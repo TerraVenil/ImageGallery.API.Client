@@ -1,8 +1,10 @@
-﻿using System.Net.Http;
+﻿using System;
+using System.Net.Http;
 using System.Threading.Tasks;
 using App.Metrics;
 using ImageGallery.API.Client.WebApi.Metrics;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace ImageGallery.API.Client.WebApi.Controllers
 {
@@ -17,15 +19,18 @@ namespace ImageGallery.API.Client.WebApi.Controllers
 
         private readonly IHttpClientFactory _httpClientFactory;
 
+        private readonly ILogger<ValuesController> _logger;
+
         /// <summary>
         /// 
         /// </summary>
         /// <param name="httpClientFactory"></param>
         /// <param name="metrics"></param>
-        public ValuesController(IHttpClientFactory httpClientFactory, IMetrics metrics)
+        public ValuesController(IHttpClientFactory httpClientFactory, IMetrics metrics, ILogger<ValuesController> logger)
         {
             _httpClientFactory = httpClientFactory;
             _metrics = metrics;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         /// <summary>

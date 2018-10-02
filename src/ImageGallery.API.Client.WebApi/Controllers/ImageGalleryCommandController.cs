@@ -8,6 +8,7 @@ using ImageGallery.API.Client.Service.Models;
 using ImageGallery.FlickrService;
 using ImageGallery.FlickrService.Helpers;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace ImageGallery.API.Client.WebApi.Controllers
@@ -24,6 +25,8 @@ namespace ImageGallery.API.Client.WebApi.Controllers
         private readonly IFlickrSearchService _flickrSearchService;
 
         private readonly IFlickrDownloadService _flickrDownloadService;
+
+        private readonly ILogger<ImageGalleryCommandController> _logger;
 
         private readonly ITokenProvider _tokenProvider;
 
@@ -47,13 +50,15 @@ namespace ImageGallery.API.Client.WebApi.Controllers
         //    _settings = settings.Value.ImagegalleryApiConfiguration;
         //}
 
-        public ImageGalleryCommandController(IFlickrDownloadService flickrDownloadService, IFlickrSearchService flickrSearchService, ITokenProvider tokenProvider, IOptionsSnapshot<ApplicationOptions> settings)
+        public ImageGalleryCommandController(IFlickrDownloadService flickrDownloadService, IFlickrSearchService flickrSearchService,
+            ITokenProvider tokenProvider, IOptionsSnapshot<ApplicationOptions> settings, ILogger<ImageGalleryCommandController> logger)
         {
             this._flickrSearchService = flickrSearchService ?? throw new ArgumentNullException(nameof(flickrSearchService));
             this._flickrDownloadService = flickrDownloadService ?? throw new ArgumentNullException(nameof(flickrDownloadService));
             //this._imageGalleryCommandService = imageGalleryCommandService ?? throw new ArgumentNullException(nameof(imageGalleryCommandService));
             this._tokenProvider = tokenProvider ?? throw new ArgumentNullException(nameof(tokenProvider));
             _settings = settings.Value.ImagegalleryApiConfiguration;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
 

@@ -7,6 +7,7 @@ using ImageGallery.API.Client.Service.Helpers;
 using ImageGallery.API.Client.Service.Interface;
 using ImageGallery.API.Client.Service.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace ImageGallery.API.Client.WebApi.Controllers
@@ -24,6 +25,8 @@ namespace ImageGallery.API.Client.WebApi.Controllers
 
         private readonly ImagegalleryApiConfiguration _settings;
 
+        private readonly ILogger<ImageGalleryQueryController> _logger;
+
         /// <summary>
         /// 
         /// </summary>
@@ -31,11 +34,12 @@ namespace ImageGallery.API.Client.WebApi.Controllers
         /// <param name="tokenProvider"></param>
         /// <param name="settings"></param>
         public ImageGalleryQueryController(IImageGalleryQueryService imageGalleryQueryService,
-            ITokenProvider tokenProvider, IOptionsSnapshot<ApplicationOptions> settings)
+            ITokenProvider tokenProvider, IOptionsSnapshot<ApplicationOptions> settings, ILogger<ImageGalleryQueryController> logger)
         {
             this._tokenProvider = tokenProvider ?? throw new ArgumentNullException(nameof(tokenProvider));
             this._imageGalleryQueryService = imageGalleryQueryService ?? throw new ArgumentNullException(nameof(imageGalleryQueryService));
             _settings = settings.Value.ImagegalleryApiConfiguration;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         /// <summary>

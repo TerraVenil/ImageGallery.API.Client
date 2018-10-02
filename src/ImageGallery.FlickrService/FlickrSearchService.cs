@@ -37,6 +37,7 @@ namespace ImageGallery.FlickrService
             _trace.Record(Annotations.LocalOperationStart("FlickrSearchService:GetPhotoInfoAsync"));
             var photoInfo = await _flickr.PhotosGetInfoAsync(photoId);
             _trace.Record(Annotations.LocalOperationStop());
+
             return photoInfo;
         }
 
@@ -45,8 +46,10 @@ namespace ImageGallery.FlickrService
             _flickrQueriesCount = 0;
             var photos = new List<Photo>();
             var defaultPageSize = photoSearchOptions.PerPage != 0 ? photoSearchOptions.Page : DefaultPageSize;
+
             var total = _flickr.PhotosSearchAsync(photoSearchOptions).Result.Total;
             _flickrQueriesCount++;
+            Log.Information("Zipkin Trace Here");
 
             var pages = PagingUtil.CalculateNumberOfPages(total, defaultPageSize);
 
@@ -54,6 +57,9 @@ namespace ImageGallery.FlickrService
             {
                 photoSearchOptions.Page = i;
                 var photoCollection = await _flickr.PhotosSearchAsync(photoSearchOptions);
+
+                Log.Information("Zipkin Trace Here");
+
                 _flickrQueriesCount++;
                 photos.AddRange(photoCollection);
             }
@@ -94,6 +100,7 @@ namespace ImageGallery.FlickrService
 
                 var defaultPageSize = photoSearchOptions.PerPage != 0 ? photoSearchOptions.Page : DefaultPageSize;
                 var x = await policy.ExecuteAsync(async () => await _flickr.PhotosSearchAsync(photoSearchOptions));
+
                 _flickrQueriesCount++;
                 var total = x.Total;
 
