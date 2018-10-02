@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Net;
 using System.Threading.Tasks;
 using ImageGallery.API.Client.Service.Configuration;
 using ImageGallery.API.Client.Service.Helpers;
 using ImageGallery.API.Client.Service.Interface;
+using ImageGallery.API.Client.Service.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
@@ -12,6 +15,7 @@ namespace ImageGallery.API.Client.WebApi.Controllers
     /// Image Gallery Query Controller
     /// </summary>
     [Route("api/[controller]")]
+    [ApiController]
     public class ImageGalleryQueryController : ControllerBase
     {
         private readonly IImageGalleryQueryService _imageGalleryQueryService;
@@ -39,6 +43,7 @@ namespace ImageGallery.API.Client.WebApi.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet]
+        [ProducesResponseType(typeof(List<ImageModel>), (int)HttpStatusCode.OK)]
         public async Task<IActionResult> Get()
         {
             Console.WriteLine($"{_settings.Login}_{_settings.Password}_{_settings.Api}");
