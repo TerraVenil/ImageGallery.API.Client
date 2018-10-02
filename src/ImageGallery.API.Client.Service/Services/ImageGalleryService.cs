@@ -20,6 +20,7 @@ namespace ImageGallery.API.Client.Service.Services
     public class ImageGalleryService : IImageGalleryService
     {
         private readonly IFlickrSearchService _flickrSearchService;
+        private readonly IFlickrDownloadService _flickrDownloadService;
 
         private readonly object locker = new object();
 
@@ -27,9 +28,10 @@ namespace ImageGallery.API.Client.Service.Services
 
         private HttpClient _client;
 
-        public ImageGalleryService(IFlickrSearchService flickrSearchService, ILogger<ImageGalleryService> logger)
+        public ImageGalleryService(IFlickrDownloadService flickrDownloadService, IFlickrSearchService flickrSearchService, ILogger<ImageGalleryService> logger)
         {
             this._flickrSearchService = flickrSearchService;
+            this._flickrDownloadService = flickrDownloadService;
             this._logger = logger;
         }
 
@@ -43,21 +45,15 @@ namespace ImageGallery.API.Client.Service.Services
 
         private volatile bool _isSearchRunning;
 
-        public void StartImagesSearchQueue(CancellationToken cancellation, SearchOptions options, int maxThreads, HttpClient client)
+        public void StartImagesSearchQueue(int maxThreads, SearchOptions options, CancellationToken cancellation)
         {
             if (_isSearchRunning) return;
-
-            _client = client;
-            if (_client == null)
-            {
-                _client = new HttpClient();
-                _client.DefaultRequestHeaders.ConnectionClose = true;
-            }
 
             _isSearchRunning = true;
             LocalFlickrQueriesCount = 0;
             InternalFlickrQueriesBytes = 0;
             _asynCounter = 0;
+
             ThreadPool.QueueUserWorkItem(async s =>
             {
                 try
@@ -78,18 +74,6 @@ namespace ImageGallery.API.Client.Service.Services
 
                     //start remote queue
                     await _flickrSearchService.StartPhotosSearchQueueAsync(photoSearchOptions, cancellation).ConfigureAwait(false);
-
-                    var cfg = ConfigurationHelper.GetGeneralConfig();
-
-                    var policy = Policy
-                        .Handle<HttpRequestException>()
-                        .WaitAndRetryAsync(
-                            retryCount: cfg.QueryRetriesCount,
-                            sleepDurationProvider: attempt => TimeSpan.FromMilliseconds(cfg.QueryWaitBetweenQueries), // Wait 200ms between each try.
-                            onRetry: (exception, calculatedWaitDuration) => // Capture some info for logging!
-                            {
-                                Log.Error("{@Status} ImageGalleryAPI Web Query Error! Retrying after {ex}", "ERROR", exception.InnerException?.Message ?? exception.Message);
-                            });
 
                     while (_flickrSearchService.IsSearchQueueRunning || _asynCounter > 0 || _flickrSearchService.PhotosQueue.Count > 0)
                     {
@@ -112,7 +96,7 @@ namespace ImageGallery.API.Client.Service.Services
                                 return;
                             try
                             {
-                                await PrepareImage(policy, photo, options.PhotoSize, cancellation);
+                                await PrepareImage(photo, options.PhotoSize, cancellation);
                             }
                             finally
                             {
@@ -152,7 +136,7 @@ namespace ImageGallery.API.Client.Service.Services
             }
         }
 
-        private async Task PrepareImage(IAsyncPolicy policy, Photo photo, string size, CancellationToken cancellation)
+        private async Task PrepareImage(Photo photo, string size, CancellationToken cancellation)
         {
             var image = new ImageForCreation
             {
@@ -165,15 +149,9 @@ namespace ImageGallery.API.Client.Service.Services
             LocalFlickrQueriesCount++;
             try
             {
-                await policy.ExecuteAsync(async token =>
-                {
-                    using (var response = await _client.GetAsync(photo.GetPhotoUrl(size), token))
-                    {
-                        image.Bytes = await response.Content.ReadAsByteArrayAsync();
-                        Log.Information("{@Status}  {@Image}", response.StatusCode, image.ToString());
-                    }
-                }, cancellation);
+                image.Bytes = await _flickrDownloadService.GetFlickrImageAsync(photo.GetPhotoUrl(size), cancellation);
                 UpdateFlickrBytes(image.Bytes.Length);
+
                 //put image into queue
                 ImageForCreations.Enqueue(image);
             }

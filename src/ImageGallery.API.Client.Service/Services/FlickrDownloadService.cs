@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using FlickrNet;
 using ImageGallery.API.Client.Service.Interface;
 using ImageGallery.FlickrService.Helpers;
+using Serilog;
 
 namespace ImageGallery.API.Client.Service.Services
 {
@@ -21,6 +22,16 @@ namespace ImageGallery.API.Client.Service.Services
         {
             var response = await _client.GetAsync(url);
             var results = await response.Content.ReadAsByteArrayAsync();
+
+            return results;
+        }
+
+        public async Task<byte[]> GetFlickrImageAsync(string url, CancellationToken cancellation)
+        {
+            var response = await _client.GetAsync(url, cancellation);
+            var results = await response.Content.ReadAsByteArrayAsync();
+
+            Log.Information("{@Status} {@Url} Image Download", response.StatusCode, url);
 
             return results;
         }

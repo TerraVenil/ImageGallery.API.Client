@@ -45,10 +45,5 @@ namespace ImageGallery.API.Client.Service.Services
                         }
                     }, cancellation);
         }
-
-        public Task PostImageGalleryApi(TokenResponse token, ImageForCreation image, bool waitForPostComplete, CancellationToken cancellation)
-        {
-            throw new System.NotImplementedException();
-        }
     }
 }

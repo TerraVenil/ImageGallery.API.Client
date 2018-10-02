@@ -8,6 +8,8 @@ namespace ImageGallery.API.Client.Service.Interface
     {
         Task<byte[]> GetFlickrImageAsync(string url);
 
+        Task<byte[]> GetFlickrImageAsync(string url, CancellationToken cancellation);
+
         Task<byte[]> GetFlickrImageAsync(Photo photo, string size);
 
         Task<byte[]> GetFlickrImageAsync(Photo photo, string size, CancellationToken cancellation);

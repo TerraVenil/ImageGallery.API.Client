@@ -66,10 +66,10 @@ namespace ImageGallery.API.Client.Console
                 // See for List of Available Machine Tags
                 //https://api-attractions.navigatorglass.com/swagger/#!/MachineKey/ApiMachineKeyPredicatesGet
 
-                //MachineTags = "machine_tags => nycparks:",
+                MachineTags = "machine_tags => nycparks:",
                 //MachineTags = "machine_tags => nychalloffame:",
                 //MachineTags = "machine_tags => nycparks:m010=",
-                MachineTags = "machine_tags => nycparks:m089=",
+                // MachineTags = "machine_tags => nycparks:m089=",
                 //MachineTags = "machine_tags => nycparks:q436=",
                 // MachineTags = "machine_tags => nycparks:m010=114",
                 // UserId = "",
@@ -108,8 +108,7 @@ namespace ImageGallery.API.Client.Console
                 // start processing
                 // waitForPostComplete is true by default, waiting when image has finished upload
                 //  if we don't need to wait (e.g. no afterward actions are needed) we can set it to false to speed up even more
-                PerformGetAndPost(CancellationTokenSource.Token, token, photoSearchOptions,
-                        config.ImagegalleryApiConfiguration.Uri, 10, 10, false).ConfigureAwait(false).GetAwaiter()
+                PerformGetAndPost(CancellationTokenSource.Token, token, photoSearchOptions, 10, 10, false).ConfigureAwait(false).GetAwaiter()
                     .OnCompleted(async () =>
                     {
                         System.Console.WriteLine($"Flickr Total API requests: {ImageSearchService.FlickrQueriesCount}");
@@ -158,7 +157,7 @@ namespace ImageGallery.API.Client.Console
         /// <returns>
         ///  A <see cref="Task"/> representing the asynchronous operation.
         /// </returns>
-        private static async Task<string> PerformGetAndPost(CancellationToken cancellation, TokenResponse token, SearchOptions searchOptions, string apiUri, int threadCount, int postThreadCount, bool waitForPostComplete)
+        private static async Task<string> PerformGetAndPost(CancellationToken cancellation, TokenResponse token, SearchOptions searchOptions, int threadCount, int postThreadCount, bool waitForPostComplete)
         {
             var limit = System.Net.ServicePointManager.DefaultConnectionLimit;
             System.Net.ServicePointManager.DefaultConnectionLimit = 5;
@@ -188,7 +187,7 @@ namespace ImageGallery.API.Client.Console
                 if (cfg == null)
                     return "Fail - not configured!";
 
-                ImageSearchService.StartImagesSearchQueue(cancellation, options, threadCount, HttpClient);
+                ImageSearchService.StartImagesSearchQueue(threadCount, options, cancellation);
                 _threadsCount = 0;
 
                 var policy = Policy
@@ -411,9 +410,8 @@ namespace ImageGallery.API.Client.Console
 
                 var config = ConfigurationHelper.Configuration.Get<ApplicationOptions>();
 
-                // Register Http Client
-                serviceCollection.AddHttpClient<IImageGalleryCommandService, ImageGalleryCommandService>(client =>
-                    client.BaseAddress = new Uri(config.ImagegalleryApiConfiguration.Uri));
+                // Api Services
+                serviceCollection.AddServices(ConfigurationHelper.Configuration);
 
                 serviceCollection.AddScoped<ITokenProvider>(_ => new TokenProvider(config.OpenIdConnectConfiguration));
                 serviceCollection.AddScoped<IFlickrSearchService>(_ =>
@@ -421,6 +419,7 @@ namespace ImageGallery.API.Client.Console
                 serviceCollection.AddScoped<IImageGalleryService, ImageGalleryService>();
 
                 var serviceProvider = serviceCollection.BuildServiceProvider();
+
                 TokenProvider = serviceProvider.GetRequiredService<ITokenProvider>();
                 ImageSearchService = serviceProvider.GetRequiredService<IImageGalleryService>();
                 ImageGalleryCommandService = serviceProvider.GetRequiredService<IImageGalleryCommandService>();
@@ -432,6 +431,28 @@ namespace ImageGallery.API.Client.Console
             {
                 Metric.StopAndWriteConsole("config");
             }
+        }
+    }
+
+    internal static class CustomExtensionsMethods
+    {
+        public static IServiceCollection AddServices(this IServiceCollection services, IConfiguration configuration)
+        {
+            var config = ConfigurationHelper.Configuration.Get<ApplicationOptions>();
+
+            // Retry Policy
+            var retryPolicy = Policy.TimeoutAsync<HttpResponseMessage>(TimeSpan.FromSeconds(10));
+
+            services.AddHttpClient<IImageGalleryCommandService, ImageGalleryCommandService>(client =>
+            {
+                client.BaseAddress = new Uri(config.ImagegalleryApiConfiguration.Uri);
+            }).AddPolicyHandler(retryPolicy).AddTransientHttpErrorPolicy(p => p.RetryAsync(3));
+
+            services.AddHttpClient<IFlickrDownloadService, FlickrDownloadService>(client => { })
+                .AddPolicyHandler(retryPolicy)
+                .AddTransientHttpErrorPolicy(p => p.RetryAsync(3));
+
+            return services;
         }
     }
 }
