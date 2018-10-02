@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using ImageGallery.API.Client.Service.Configuration;
 using ImageGallery.API.Client.Service.Interface;
@@ -14,6 +16,7 @@ namespace ImageGallery.API.Client.WebApi.Controllers
     /// ImageGallery Command Controller
     /// </summary>
     [Route("api/[controller]")]
+    [ApiController]
     public class ImageGalleryCommandController : ControllerBase
     {
         private readonly IImageGalleryCommandService _imageGalleryCommandService;
@@ -34,30 +37,49 @@ namespace ImageGallery.API.Client.WebApi.Controllers
         /// <param name="flickrSearchService"></param>
         ///  <param name="tokenProvider"></param>
         ///  <param name="settings"></param>
-        public ImageGalleryCommandController(IImageGalleryCommandService imageGalleryCommandService, IFlickrDownloadService flickrDownloadService, IFlickrSearchService flickrSearchService,
-            ITokenProvider tokenProvider, IOptionsSnapshot<ApplicationOptions> settings)
+        //public ImageGalleryCommandController(IImageGalleryCommandService imageGalleryCommandService, IFlickrDownloadService flickrDownloadService, IFlickrSearchService flickrSearchService,
+        //    ITokenProvider tokenProvider, IOptionsSnapshot<ApplicationOptions> settings)
+        //{
+        //    this._tokenProvider = tokenProvider ?? throw new ArgumentNullException(nameof(tokenProvider));
+        //    this._flickrSearchService = flickrSearchService ?? throw new ArgumentNullException(nameof(flickrSearchService));
+        //    this._flickrDownloadService = flickrDownloadService ?? throw new ArgumentNullException(nameof(flickrDownloadService));
+        //    this._imageGalleryCommandService = imageGalleryCommandService ?? throw new ArgumentNullException(nameof(imageGalleryCommandService));
+        //    _settings = settings.Value.ImagegalleryApiConfiguration;
+        //}
+
+        public ImageGalleryCommandController(IFlickrDownloadService flickrDownloadService, IFlickrSearchService flickrSearchService, ITokenProvider tokenProvider, IOptionsSnapshot<ApplicationOptions> settings)
         {
-            this._tokenProvider = tokenProvider ?? throw new ArgumentNullException(nameof(tokenProvider));
             this._flickrSearchService = flickrSearchService ?? throw new ArgumentNullException(nameof(flickrSearchService));
             this._flickrDownloadService = flickrDownloadService ?? throw new ArgumentNullException(nameof(flickrDownloadService));
-            this._imageGalleryCommandService = imageGalleryCommandService ?? throw new ArgumentNullException(nameof(imageGalleryCommandService));
+            //this._imageGalleryCommandService = imageGalleryCommandService ?? throw new ArgumentNullException(nameof(imageGalleryCommandService));
+            this._tokenProvider = tokenProvider ?? throw new ArgumentNullException(nameof(tokenProvider));
             _settings = settings.Value.ImagegalleryApiConfiguration;
         }
+
 
 
         /// <summary>
         /// 
         /// </summary>
+        /// <param name="id"></param>
         /// <param name="photoId"></param>
         /// <param name="size"></param>
         /// <returns></returns>
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody]string photoId, string size)
+        [Consumes("application/json")]
+        [ProducesResponseType((int)HttpStatusCode.NotFound)]
+        [ProducesResponseType((int)HttpStatusCode.Created)]
+        public async Task<IActionResult> Post([FromBody]string id)  //[FromBody]string photoId, string size
         {
+            var photoId = "9250911801";
+            var size = "n";
+
             var token = await _tokenProvider.RequestResourceOwnerPasswordAsync(_settings.Login, _settings.Password, _settings.Api);
             var photoInfo = await _flickrSearchService.GetPhotoInfoAsync(photoId);
-            var photo = await _flickrDownloadService.GetFlickrImageAsync(photoInfo.GetPhotoUrl(size));
+            if (photoInfo == null)
+                return NotFound();
 
+            var photo = await _flickrDownloadService.GetFlickrImageAsync(photoInfo.GetPhotoUrl(size));
             var image = new ImageForCreation
             {
                 Title = photoInfo.Title,
@@ -67,9 +89,10 @@ namespace ImageGallery.API.Client.WebApi.Controllers
                 DataSource = "Flickr"
             };
 
-            //await _imageGalleryCommandService.PostImageGalleryApi(token, image, null);
+            //var cancellationToken = new CancellationToken();
+            //await _imageGalleryCommandService.PostImageGalleryApi(token, image, cancellationToken);
 
-            return Ok();
+            return Ok(photoInfo);
         }
 
     }
