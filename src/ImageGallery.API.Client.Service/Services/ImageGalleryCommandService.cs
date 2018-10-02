@@ -14,25 +14,23 @@ namespace ImageGallery.API.Client.Service.Services
 {
     public class ImageGalleryCommandService : IImageGalleryCommandService
     {
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly HttpClient _httpClient;
 
         private readonly ImagegalleryApiConfiguration _settings;
 
-        public ImageGalleryCommandService(IHttpClientFactory httpClientFactory, IOptionsSnapshot<ApplicationOptions> settings)
+        public ImageGalleryCommandService(HttpClient client, IOptionsSnapshot<ApplicationOptions> settings)
         {
-            _httpClientFactory = httpClientFactory;
+            _httpClient = client;
             _settings = settings.Value.ImagegalleryApiConfiguration;
         }
 
         public async Task PostImageGalleryApi(TokenResponse token, ImageForCreation image, CancellationToken cancellation)
         {
-            var client = _httpClientFactory.CreateClient();
-            client.BaseAddress = new Uri("https://imagegallery-api.informationcart.com");
-            client.SetBearerToken(token.AccessToken);
+            _httpClient.SetBearerToken(token.AccessToken);
 
             var serializedImageForCreation = JsonConvert.SerializeObject(image);
 
-            await client.PostAsync(
+            await _httpClient.PostAsync(
                     $"/api/images",
                     new StringContent(serializedImageForCreation, System.Text.Encoding.Unicode, "application/json"), cancellation)
                     .ContinueWith(r =>

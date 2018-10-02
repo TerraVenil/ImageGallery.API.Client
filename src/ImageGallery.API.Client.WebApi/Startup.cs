@@ -74,8 +74,6 @@ namespace ImageGallery.API.Client.WebApi
             //Services 
             services.AddScoped<ITokenProvider>(_ => new TokenProvider(config.OpenIdConnectConfiguration));
             services.AddScoped<IFlickrSearchService>(_ => new FlickrSearchService(config.FlickrConfiguration.ApiKey, config.FlickrConfiguration.Secret));
-            services.AddScoped<IImageGalleryCommandService, ImageGalleryCommandService>();
-            services.AddScoped<IImageGalleryQueryService, ImageGalleryQueryService>();
             services.AddScoped<IFlickrDownloadService, FlickrDownloadService>();
 
             //Retry Policy

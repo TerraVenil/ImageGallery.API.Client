@@ -158,8 +158,7 @@ namespace ImageGallery.API.Client.Console
         /// <returns>
         ///  A <see cref="Task"/> representing the asynchronous operation.
         /// </returns>
-        private static async Task<string> PerformGetAndPost(CancellationToken cancellation, TokenResponse token,
-            SearchOptions searchOptions, string apiUri, int threadCount, int postThreadCount, bool waitForPostComplete)
+        private static async Task<string> PerformGetAndPost(CancellationToken cancellation, TokenResponse token, SearchOptions searchOptions, string apiUri, int threadCount, int postThreadCount, bool waitForPostComplete)
         {
             var limit = System.Net.ServicePointManager.DefaultConnectionLimit;
             System.Net.ServicePointManager.DefaultConnectionLimit = 5;
@@ -316,8 +315,7 @@ namespace ImageGallery.API.Client.Console
         /// <param name="waitForPostComplete"></param>
         /// <param name="cancellation"></param>
         /// <returns></returns>
-        private static async Task PostImageGalleryApi(HttpClient client, RetryPolicy policy, ImageForCreation image,
-            string apiUri, bool waitForPostComplete, CancellationToken cancellation)
+        private static async Task PostImageGalleryApi(HttpClient client, RetryPolicy policy, ImageForCreation image, string apiUri, bool waitForPostComplete, CancellationToken cancellation)
         {
             Log.Verbose("ImageGalleryAPI Post {@Image}| {FileSize}", image.ToString(), image.Bytes.Length);
 
@@ -362,8 +360,7 @@ namespace ImageGallery.API.Client.Console
         /// <param name="token"></param>
         /// <param name="imageGalleryApi"></param>
         /// <returns></returns>
-        private static async Task<string> GetUserImageCollectionAsync(Policy policy, CancellationToken cancellation,
-            TokenResponse token, string imageGalleryApi)
+        private static async Task<string> GetUserImageCollectionAsync(Policy policy, CancellationToken cancellation, TokenResponse token, string imageGalleryApi)
         {
             // call api
             HttpClient.SetBearerToken(token.AccessToken);
@@ -418,16 +415,12 @@ namespace ImageGallery.API.Client.Console
                 serviceCollection.AddHttpClient<IImageGalleryCommandService, ImageGalleryCommandService>(client =>
                     client.BaseAddress = new Uri(config.ImagegalleryApiConfiguration.Uri));
 
-                var serviceProvider = new ServiceCollection()
-                    .AddScoped<ITokenProvider>(_ => new TokenProvider(config.OpenIdConnectConfiguration))
-                    .AddScoped<IFlickrSearchService>(_ =>
-                        new FlickrSearchService(config.FlickrConfiguration.ApiKey, config.FlickrConfiguration.Secret))
-                    .AddScoped<IImageGalleryService, ImageGalleryService>()
-                    .AddScoped<IImageGalleryCommandService, ImageGalleryCommandService>()
-                    .AddLogging()
-                    .AddHttpClient()
-                    .BuildServiceProvider();
+                serviceCollection.AddScoped<ITokenProvider>(_ => new TokenProvider(config.OpenIdConnectConfiguration));
+                serviceCollection.AddScoped<IFlickrSearchService>(_ =>
+                        new FlickrSearchService(config.FlickrConfiguration.ApiKey, config.FlickrConfiguration.Secret));
+                serviceCollection.AddScoped<IImageGalleryService, ImageGalleryService>();
 
+                var serviceProvider = serviceCollection.BuildServiceProvider();
                 TokenProvider = serviceProvider.GetRequiredService<ITokenProvider>();
                 ImageSearchService = serviceProvider.GetRequiredService<IImageGalleryService>();
                 ImageGalleryCommandService = serviceProvider.GetRequiredService<IImageGalleryCommandService>();
