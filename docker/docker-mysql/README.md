@@ -1,7 +1,6 @@
-# ImageGallery mysql
+# ImageGallery MySQL
 
 [![This image on DockerHub](https://img.shields.io/docker/pulls/stuartshay/imagegallery-mysql.svg)](https://hub.docker.com/r/stuartshay/imagegallery-mysql/)
-
 
  Jenkins | Status  
 ------------ | -------------
