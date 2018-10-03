@@ -7,9 +7,9 @@ node('docker') {
 
 
     stage('Docker') {
-        sh 'docker build -f docker/docker-grafana-config/Dockerfile -t stuartshay/imagegallery-grafana:config ./docker/docker-grafana-config'
+        sh 'docker build -f docker/docker-mysql/Dockerfile -t stuartshay/imagegallery-mysql:v1 ./docker/docker-mysql'
         withDockerRegistry([credentialsId: 'docker-hub-navigatordatastore']) {
-            sh 'docker push stuartshay/imagegallery-grafana:config'
+            sh 'docker push stuartshay/imagegallery-mysql:v1'
         }
     }
 

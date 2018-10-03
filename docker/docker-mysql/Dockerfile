@@ -1,8 +1,16 @@
-FROM appropriate/curl
+# Share the same base image to reduce layers used in testing
+FROM openzipkin/jre-full:1.8.0_171
 
-USER root
-COPY config/init.sh .
-RUN chmod 755 -c /init.sh
+WORKDIR /mysql
+ADD install.sh /mysql/install
+RUN /mysql/install
 
+ENV ZIPKIN_VERSION 2.11.6
 
-ENTRYPOINT ["/init.sh"]
+ADD configure.sh /mysql/configure
+RUN /mysql/configure
+
+ADD run.sh /mysql/run.sh
+CMD /mysql/run.sh
+
+EXPOSE 3306
