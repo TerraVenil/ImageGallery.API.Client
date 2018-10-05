@@ -28,6 +28,14 @@ w/ImageGallery.API.Client.WebApi Stack
 docker-compose -f docker-compose.yml -f docker-compose-api.yml pull
 docker-compose -f docker-compose.yml -f docker-compose-api.yml up
 ```
+### WebAPI
+
+```
+http://<DOCKER_HOST_IP>:9150/swagger/
+http://<DOCKER_HOST_IP>:4333/health
+```
+
+
 
 ### Zipkin Server/UI
 
