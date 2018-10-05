@@ -3,7 +3,7 @@ FROM grafana/grafana:5.2.4
 USER root
 
 ADD ./provisioning /etc/grafana/provisioning
-COPY  config.ini /etc/grafana/config.ini
+ADD ./config.ini /etc/grafana/config.ini
 COPY  provisioning/dashboards /var/lib/grafana/dashboards
 
 
