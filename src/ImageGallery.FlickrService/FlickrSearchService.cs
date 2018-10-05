@@ -29,14 +29,16 @@ namespace ImageGallery.FlickrService
         public FlickrSearchService(string apiKey, string secret)
         {
             _flickr = new Flickr(apiKey, secret);
-            _trace = zipkin4net.Trace.Create();
+            _trace = zipkin4net.Trace.Current.Child();
         }
 
         public async Task<PhotoInfo> GetPhotoInfoAsync(string photoId)
         {
-            _trace.Record(Annotations.LocalOperationStart("FlickrSearchService:GetPhotoInfoAsync"));
+            _trace.Record(Annotations.ServerRecv());
+            _trace.Record(Annotations.ServiceName("FlickrSearchService:GetPhotoInfoAsync"), DateTime.UtcNow);
+            _trace.Record(Annotations.Rpc("get"));
             var photoInfo = await _flickr.PhotosGetInfoAsync(photoId);
-            _trace.Record(Annotations.LocalOperationStop());
+            _trace.Record(Annotations.ServerSend());
 
             return photoInfo;
         }
@@ -49,20 +51,20 @@ namespace ImageGallery.FlickrService
 
             var total = _flickr.PhotosSearchAsync(photoSearchOptions).Result.Total;
             _flickrQueriesCount++;
-            Log.Information("Zipkin Trace Here");
 
             var pages = PagingUtil.CalculateNumberOfPages(total, defaultPageSize);
-
+            _trace.Record(Annotations.ServerRecv());
+            _trace.Record(Annotations.ServiceName("FlickrSearchService:SearchPhotosAsync"), DateTime.UtcNow);
+            _trace.Record(Annotations.Rpc("get-photo-per-page"));
             for (int i = 1; i <= pages; i++)
             {
                 photoSearchOptions.Page = i;
                 var photoCollection = await _flickr.PhotosSearchAsync(photoSearchOptions);
 
-                Log.Information("Zipkin Trace Here");
-
                 _flickrQueriesCount++;
                 photos.AddRange(photoCollection);
             }
+            _trace.Record(Annotations.ServerSend());
 
             return photos;
         }

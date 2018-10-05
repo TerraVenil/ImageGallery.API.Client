@@ -33,7 +33,7 @@ namespace ImageGallery.API.Client.WebApi
             {
                 Log.Information("Init:ImageGallery.API.Client.WebApi");
                 Debug.Print(msg);
-                Debugger.Break();
+                //Debugger.Break();
             });
 
             try

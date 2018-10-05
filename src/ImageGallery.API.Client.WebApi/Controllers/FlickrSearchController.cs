@@ -36,7 +36,7 @@ namespace ImageGallery.API.Client.WebApi.Controllers
         public FlickrSearchController(IFlickrSearchService flickrSearchService,
             IFlickrDownloadService flickrDownloadService, ILogger<FlickrSearchController> logger)
         {
-            _trace = Trace.Create();
+            _trace = Trace.Current.Child();
             _flickrSearchService = flickrSearchService ?? throw new ArgumentNullException(nameof(flickrSearchService));
             _flickrDownloadService = flickrDownloadService ?? throw new ArgumentNullException(nameof(flickrDownloadService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -50,11 +50,11 @@ namespace ImageGallery.API.Client.WebApi.Controllers
         [HttpGet]
         public async Task<IActionResult> Get()
         {
+            _trace.Record(Annotations.ClientSend());
             _trace.Record(Annotations.ServiceName("FlickrSearch:PhotoInfo"));
-            _trace.Record(Annotations.ServerRecv());
-
+            _trace.Record(Annotations.Rpc("GET"));
             var result = await _flickrSearchService.GetPhotoInfoAsync("7012518889");
-            _trace.Record(Annotations.ServerSend());
+            _trace.Record(Annotations.ClientRecv());
 
             return Ok(result);
         }
@@ -85,8 +85,12 @@ namespace ImageGallery.API.Client.WebApi.Controllers
                 //PhotoSize = "q", //width="1024" height="768
             };
 
-            Log.Error("Begin Zipkin Trace Here");
+            Log.Information("Begin Zipkin Trace Here");
+            _trace.Record(Annotations.ClientSend());
+            _trace.Record(Annotations.ServiceName("FlickrSearch:PostFlickrImage"));
+            _trace.Record(Annotations.Rpc("Post"));
             var photos = await _flickrSearchService.SearchPhotosAsync(photoSearchOptions);
+            _trace.Record(Annotations.ClientRecv());
             _logger.LogInformation("Total Photos:{PhotoCount}", photos.Count);
 
 
