@@ -3,9 +3,11 @@ using System.Diagnostics;
 using App.Metrics;
 using App.Metrics.AspNetCore;
 using App.Metrics.Formatters.Prometheus;
+using ImageGallery.API.Client.Service.Configuration;
 using ImageGallery.API.Client.Service.Helpers;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Serilog;
 using Serilog.Sinks.SystemConsole.Themes;
 
@@ -23,17 +25,21 @@ namespace ImageGallery.API.Client.WebApi
         /// <returns></returns>
         public static int Main(string[] args)
         {
+            var config = ConfigurationHelper.Configuration.Get<ApplicationOptions>();
+
             Log.Logger = new LoggerConfiguration()
                 .ReadFrom.Configuration(ConfigurationHelper.Configuration)
                 .WriteTo.Console(theme: SystemConsoleTheme.Literate)
-                .WriteTo.MySQL("server=mysql;uid=zipkin;pwd=zipkin;database=zipkin;")
+                .WriteTo.Logger(lc => lc
+                    .Filter.ByExcluding(_ => !config.MySqlLoggerConfiguration.Enabled)
+                    .WriteTo.MySQL(config.MySqlLoggerConfiguration.ConnectionString))
                 .CreateLogger();
 
             Serilog.Debugging.SelfLog.Enable(msg =>
             {
-                Log.Information("Init:ImageGallery.API.Client.WebApi");
+                Log.Information(msg);
                 Debug.Print(msg);
-                //Debugger.Break();
+                Debugger.Break();
             });
 
             try

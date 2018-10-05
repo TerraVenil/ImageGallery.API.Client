@@ -28,5 +28,10 @@
         /// 
         /// </summary>
         public ZipkinConfiguration ZipkinConfiguration { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public MySqlLoggerConfiguration MySqlLoggerConfiguration { get; set; }
     }
 }

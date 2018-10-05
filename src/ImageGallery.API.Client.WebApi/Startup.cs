@@ -203,6 +203,7 @@ namespace ImageGallery.API.Client.WebApi
         }
     }
 
+    // https://davidpine.net/blog/asp-net-core-configuration/
     //https://github.com/powerumc/microservice-architecture-quick-start/tree/6a5515301d5f2d26ce21f927535dce2bb02ae49f
     //https://github.com/dotnet-architecture/eShopOnContainers/blob/dev/src/Services/Payment/Payment.API/Program.cs
 }

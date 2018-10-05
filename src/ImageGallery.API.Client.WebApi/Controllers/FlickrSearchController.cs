@@ -53,7 +53,9 @@ namespace ImageGallery.API.Client.WebApi.Controllers
             _trace.Record(Annotations.ClientSend());
             _trace.Record(Annotations.ServiceName("FlickrSearch:PhotoInfo"));
             _trace.Record(Annotations.Rpc("GET"));
+
             var result = await _flickrSearchService.GetPhotoInfoAsync("7012518889");
+
             _trace.Record(Annotations.ClientRecv());
 
             return Ok(result);
