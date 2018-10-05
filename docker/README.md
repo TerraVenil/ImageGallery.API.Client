@@ -9,9 +9,10 @@ Modify hosts file
 Windows c:\windows\system32\drivers\etc\hosts
 
 ```
-192.168.99.100 zipkin
-192.168.99.100 grafana
-192.168.99.100 prometheus
+<DOCKER_HOST_IP> zipkin
+<DOCKER_HOST_IP> grafana
+<DOCKER_HOST_IP> prometheus
+<DOCKER_HOST_IP> mysql
 ```
 
 Run Zipkin/Grafana Stack
@@ -25,8 +26,16 @@ w/ImageGallery.API.Client.WebApi Stack
 
 ```
 docker-compose -f docker-compose.yml -f docker-compose-api.yml pull
-docker-compose -f docker-compose.yml -f docker-compose-api.yml up 
+docker-compose -f docker-compose.yml -f docker-compose-api.yml up
 ```
+### WebAPI
+
+```
+http://<DOCKER_HOST_IP>:9150/swagger/
+http://<DOCKER_HOST_IP>:4333/health
+```
+
+
 
 ### Zipkin Server/UI
 

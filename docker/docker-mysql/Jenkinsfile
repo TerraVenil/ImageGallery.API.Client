@@ -1,0 +1,20 @@
+node('docker') {
+
+
+    stage('Git Checkout') {
+        git branch: 'master', credentialsId: 'gihub-key', url: 'git@github.com:stuartshay/ImageGallery.API.Client.git'
+    }
+
+
+    stage('Docker') {
+        sh 'docker build -f docker/docker-mysql/Dockerfile -t stuartshay/imagegallery-mysql:v1 ./docker/docker-mysql'
+        withDockerRegistry([credentialsId: 'docker-hub-navigatordatastore']) {
+            sh 'docker push stuartshay/imagegallery-mysql:v1'
+        }
+    }
+
+    stage('Mail') {
+        emailext attachLog: true, body: '', subject: "Jenkins build status - ${currentBuild.fullDisplayName}", to: 'sshay@yahoo.com'
+    }
+
+ }   
