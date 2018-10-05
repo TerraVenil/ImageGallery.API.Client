@@ -26,6 +26,7 @@ namespace ImageGallery.API.Client.WebApi
             Log.Logger = new LoggerConfiguration()
                 .ReadFrom.Configuration(ConfigurationHelper.Configuration)
                 .WriteTo.Console(theme: SystemConsoleTheme.Literate)
+                .WriteTo.MySQL("server=mysql;uid=zipkin;pwd=zipkin;database=zipkin;")
                 .CreateLogger();
 
             Serilog.Debugging.SelfLog.Enable(msg =>
