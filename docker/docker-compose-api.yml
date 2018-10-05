@@ -7,5 +7,5 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Staging
     ports:
-      - 8150:8150
-      - 3333:3333
+      - 9150:8150
+      - 4333:3333
