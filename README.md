@@ -16,8 +16,8 @@ SonarQube | [![Build Status](https://jenkins.navigatorglass.com/buildStatus/icon
 ### Prerequisites
 
 ```
-.NET Core 2.1
-VS Code 1.19.1 or VS 2017 15.8.0
+NET Core SDK 2.1.4
+VS Code 1.19.1 or VS 2017 15.8.4
 ```
 
 ### Install
