@@ -4,7 +4,7 @@ USER root
 
 ADD ./provisioning /etc/grafana/provisioning
 ADD ./config.ini /etc/grafana/config.ini
-COPY  provisioning/dashboards /var/lib/grafana/dashboards
+ADD ./dashboards /var/lib/grafana/dashboards
 
 
 
