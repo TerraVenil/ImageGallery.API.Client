@@ -10,13 +10,6 @@ if ! curl --retry 5 --retry-connrefused --retry-delay 0 -sf http://grafana:3000/
 fi
 
 
-## Plugins TODO - Install
-#grafana-cli plugins install grafana-piechart-panel
-#grafana-cli plugins install novalabs-annotations-panel
-#grafana-cli plugins install briangann-datatable-panel
-#grafana-cli plugins install briangann-gauge-panel
-
-
 ## Dashboards 
 dashboard_id=1598
 last_revision=$(curl -sf https://grafana.com/api/dashboards/${dashboard_id}/revisions | grep '"revision":' | sed 's/ *"revision": \([0-9]*\),/\1/' | sort -n | tail -1)
@@ -28,6 +21,14 @@ curl --retry-connrefused --retry 5 --retry-delay 0 -sf \
      -X POST -H "Content-Type: application/json" \
      --data-binary @data.json \
      http://grafana:3000/api/dashboards/import
+
+
+## Plugins TODO - Install
+#grafana-cli plugins install grafana-piechart-panel
+#grafana-cli plugins install novalabs-annotations-panel
+#grafana-cli plugins install briangann-datatable-panel
+#grafana-cli plugins install briangann-gauge-panel
+
 
 
 
