@@ -2930,7 +2930,7 @@
       {
         "allValue": null,
         "current": {},
-        "datasource": "${DS_PROM}",
+        "datasource": "prometheus",
         "hide": 0,
         "includeAll": true,
         "label": null,
