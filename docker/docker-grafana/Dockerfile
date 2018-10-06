@@ -12,4 +12,4 @@ RUN chmod +x /usr/local/bin/grafana.sh && \
     apt-get update && \
     apt-get install --no-install-recommends less && \
     rm -rf /var/lib/apt/lists/* && \
-    grafana.sh plugin update-all
+    grafana.sh plugin install grafana-piechart-panel
