@@ -59,6 +59,7 @@ namespace ImageGallery.API.Client.WebApi
 
             // AppMetrics
             services.AddMetrics();
+            services.AddMetricsTrackingMiddleware();
 
             //Zipkin
             services.AddHttpClient("Tracer").AddHttpMessageHandler(provider =>
@@ -93,12 +94,31 @@ namespace ImageGallery.API.Client.WebApi
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseHealthChecks("/health", port: 3333);
-
+            ConfigureHealthChecks(app);
+            ConfigureMetrics(app);
             ConfigureZipkin(app, loggerFactory);
             ConfigureSwagger(app);
 
             app.UseMvc();
+        }
+
+        private void ConfigureMetrics(IApplicationBuilder app)
+        {
+            // To add all available tracking middleware
+            app.UseMetricsAllMiddleware();
+
+            // Or to cherry-pick the tracking of interest
+            // app.UseMetricsActiveRequestMiddleware();
+            // app.UseMetricsErrorTrackingMiddleware();
+            // app.UseMetricsPostAndPutSizeTrackingMiddleware();
+            // app.UseMetricsRequestTrackingMiddleware();
+            // app.UseMetricsOAuth2TrackingMiddleware();
+            // app.UseMetricsApdexTrackingMiddleware();
+        }
+
+        private void ConfigureHealthChecks(IApplicationBuilder app)
+        {
+            app.UseHealthChecks("/health"); //, port: 5555);
         }
 
         private void ConfigureSwagger(IApplicationBuilder app)
