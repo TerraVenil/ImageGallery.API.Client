@@ -25,11 +25,11 @@ curl --retry-connrefused --retry 5 --retry-delay 0 -sf \
 
 
 # create new user - L: viewer P:readonly
-curl \
- -XPOST \
- -H "Content-Type: application/json" \
- -d '{ "name":"viewer", "email":"viewer@org.com", "login":"viewer",  "password":"readonly" }' \
- http://admin:admin@grafana:3000/api/admin/users 
+curl --retry-connrefused --retry 5 --retry-delay 0 -sf \
+    -X POST -H "Content-Type: application/json" \
+    -d '{ "name":"viewer", "email":"viewer@org.com", "login":"viewer",  "password":"readonly" }' \
+    http://admin:admin@grafana:3000/api/admin/users 
+
 
 
 # set user's home dashboard   
