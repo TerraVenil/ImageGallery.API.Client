@@ -1,6 +1,16 @@
 FROM grafana/grafana:5.2.4
 
 USER root
-COPY dashboard/ps-monitoring-dashboard.json /var/lib/grafana/dashboards/
 
-# https://github.com/cirocosta/sample-grafana/blob/master/grafana/Dockerfile
+ADD ./scripts/grafana.sh /usr/local/bin
+
+ADD ./provisioning /etc/grafana/provisioning
+ADD ./config.ini /etc/grafana/config.ini
+ADD ./dashboards /var/lib/grafana/dashboards
+
+RUN chmod +x /usr/local/bin/grafana.sh && \
+    apt-get update && \
+    apt-get install --no-install-recommends less && \
+    rm -rf /var/lib/apt/lists/* 
+
+RUN ./usr/local/bin/grafana.sh

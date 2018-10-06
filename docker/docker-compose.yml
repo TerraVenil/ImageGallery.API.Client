@@ -69,7 +69,7 @@ services:
       - '--web.console.templates=/usr/share/prometheus/consoles'
 
   grafana:
-    image: stuartshay/imagegallery-grafana:v5.2.4
+    image: stuartshay/imagegallery-grafana:v5.2.4-v2
     container_name: grafana
     ports:
       - 3000:3000
