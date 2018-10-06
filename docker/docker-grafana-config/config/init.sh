@@ -2,6 +2,22 @@
  
 set -xeuo pipefail
 
+# create new user - L: viewer P:readonly
+curl --retry-connrefused --retry 5 --retry-delay 0 -sf \
+    -X POST -H "Content-Type: application/json" \
+    -d '{ "name":"viewer", "email":"viewer@org.com", "login":"viewer",  "password":"readonly" }' \
+    http://admin:admin@grafana:3000/api/admin/users 
+
+
+# set user's home dashboard   
+curl \
+ -X PUT \
+ -H 'Content-Type: application/json' \
+ -d '{ "homeDashboardId":1 }' \
+ http://viewer:readonly@grafana:3000/api/user/preferences
+
+
+
 ## DataSource 
 if ! curl --retry 5 --retry-connrefused --retry-delay 0 -sf http://grafana:3000/api/dashboards/name/prom; then
     curl -sf -X POST -H "Content-Type: application/json" \
@@ -24,18 +40,5 @@ curl --retry-connrefused --retry 5 --retry-delay 0 -sf \
 
 
 
-# create new user - L: viewer P:readonly
-curl --retry-connrefused --retry 5 --retry-delay 0 -sf \
-    -X POST -H "Content-Type: application/json" \
-    -d '{ "name":"viewer", "email":"viewer@org.com", "login":"viewer",  "password":"readonly" }' \
-    http://admin:admin@grafana:3000/api/admin/users 
 
-
-
-# set user's home dashboard   
-curl \
- -X PUT \
- -H 'Content-Type: application/json' \
- -d '{ "homeDashboardId":1 }' \
- http://viewer:readonly@grafana:3000/api/user/preferences
 
