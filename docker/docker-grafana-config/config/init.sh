@@ -29,7 +29,7 @@ curl \
  -XPOST \
  -H "Content-Type: application/json" \
  -d '{ "name":"viewer", "email":"viewer@org.com", "login":"viewer",  "password":"readonly" }' \
- http://admin:admin@localhost:3000/api/admin/users 
+ http://admin:admin@lgrafana:3000/api/admin/users 
 
 
 # set user's home dashboard   
@@ -37,5 +37,5 @@ curl \
  -X PUT \
  -H 'Content-Type: application/json' \
  -d '{ "homeDashboardId":1 }' \
- http://viewer:readonly@localhost:3000/api/user/preferences
+ http://viewer:readonly@grafana:3000/api/user/preferences
 
