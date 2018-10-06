@@ -19,4 +19,5 @@ Build Image  | [![Build Status](https://jenkins.navigatorglass.com/buildStatus/i
 │       │   └── all.yml         # Configuration about grafana dashboard provisioning
 │       └── datasources
 │           └── all.yml         # Configuration about grafana
+│   ├── scripts                 # Grafana default install & configuration scripts
 ```
