@@ -10,7 +10,7 @@ Build Image  | [![Build Status](https://jenkins.navigatorglass.com/buildStatus/i
 ```
 ├── docker-mysql
 │   ├── Dockerfile              # Dockerfile that adds config to the image
-│   ├── config
+│   └── config
 │       └── configure.sh
 │       └── install.sh
 │       └── run.sh
