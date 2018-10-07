@@ -3,10 +3,21 @@ version: '3'
 services:
   
   storage:
-    image: openzipkin/zipkin-mysql
+    image: stuartshay/imagegallery-mysql:v1
     container_name: mysql
     ports:
       - 3306:3306
+
+  storage-exporter:
+    image: prom/mysqld-exporter
+    container_name: mysqld-exporter
+    ports:
+      - 9104:9104
+    depends_on:
+      - storage
+    environment:
+      - DATA_SOURCE_NAME="user:password@(my-mysql-network:3306)/"
+
 
   # The zipkin process services the UI, and also exposes a POST endpoint that
   # instrumentation can send trace data to. Scribe is disabled by default.
@@ -87,6 +98,10 @@ services:
     #volumes:
     #  - ./prometheus/create-datasource-and-dashboard.sh:/create.sh:ro
     # command: /create.sh
+
+
+
+
 
 
 volumes:

@@ -16,3 +16,10 @@ scrape_configs:
     metrics_path: '/metrics-text'
     static_configs:
       - targets: ['api-imagegallery-client-webapi:3333'] 
+  - job_name: ' mysqld-exporter'
+    scrape_interval: 5s
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: [' mysqld-exporter:9104'] 
+
+
