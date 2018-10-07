@@ -21,5 +21,3 @@ scrape_configs:
     metrics_path: '/metrics'
     static_configs:
       - targets: [' mysqld-exporter:9104'] 
-
-
