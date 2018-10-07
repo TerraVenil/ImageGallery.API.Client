@@ -36,7 +36,7 @@ GRANT ALL PRIVILEGES ON zipkin.* TO zipkin@'%' IDENTIFIED BY 'zipkin' WITH GRANT
 
 USE diagnostics;
 CREATE USER 'diagnostics'@'localhost' IDENTIFIED BY 'password';
-
+GRANT ALL PRIVILEGES ON diagnostics.* TO 'diagnostics'@'localhost'
 
 
 
