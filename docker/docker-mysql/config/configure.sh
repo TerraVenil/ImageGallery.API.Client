@@ -24,13 +24,21 @@ DELETE FROM mysql.user ;
 DROP DATABASE IF EXISTS test ;
 
 SET GLOBAL innodb_file_format=Barracuda ;
+
 CREATE DATABASE zipkin ;
+CREATE DATABASE diagnostics ;
 
 USE zipkin;
 SOURCE /mysql/zipkin.sql ;
 
 GRANT ALL PRIVILEGES ON zipkin.* TO zipkin@'%' IDENTIFIED BY 'zipkin' WITH GRANT OPTION ;
 FLUSH PRIVILEGES ;
+
+
+CREATE USER 'diagnostics'@'localhost' IDENTIFIED BY 'password';
+
+
+
 EOSQL
 
 echo "*** Stopping MySQL"

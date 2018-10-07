@@ -4,6 +4,7 @@ services:
   
   storage:
     image: stuartshay/imagegallery-mysql:v1
+    #image: openzipkin/zipkin-mysql
     container_name: mysql
     ports:
       - 3306:3306
