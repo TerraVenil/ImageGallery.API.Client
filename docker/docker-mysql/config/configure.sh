@@ -33,14 +33,14 @@ USE zipkin;
 SOURCE /mysql/zipkin.sql ;
 
 GRANT ALL PRIVILEGES ON zipkin.* TO zipkin@'%' IDENTIFIED BY 'zipkin' WITH GRANT OPTION ;
-FLUSH PRIVILEGES ;
 
 USE diagnostics;
 CREATE USER 'diagnostics'@'localhost' IDENTIFIED BY 'password';
 
 GRANT ALL PRIVILEGES ON diagnostics.* TO diagnostics'%' IDENTIFIED BY 'diagnostics' WITH GRANT OPTION ;
-FLUSH PRIVILEGES ;
 
+
+FLUSH PRIVILEGES ;
 EOSQL
 
 
