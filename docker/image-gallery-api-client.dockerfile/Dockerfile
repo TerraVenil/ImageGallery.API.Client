@@ -28,6 +28,7 @@ COPY --from=build-env /*.sh /
 RUN apt-get update && apt-get install -y \
         curl \
         apt-transport-https \
+        net-tools \
         dnsutils \ 
         iputils-ping \
         nmap \ 
