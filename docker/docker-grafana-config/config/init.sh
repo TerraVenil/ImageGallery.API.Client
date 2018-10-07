@@ -38,7 +38,16 @@ curl --retry-connrefused --retry 5 --retry-delay 0 -sf \
      --data-binary @data.json \
      http://grafana:3000/api/dashboards/import
 
+dashboard_id=6239
+last_revision=$(curl -sf https://grafana.com/api/dashboards/${dashboard_id}/revisions | grep '"revision":' | sed 's/ *"revision": \([0-9]*\),/\1/' | sort -n | tail -1)
 
+echo '{"dashboard": ' > data2.json
+curl -s https://grafana.com/api/dashboards/${dashboard_id}/revisions/${last_revision}/download >> data2.json
+echo ', "inputs": [{"name": "DS_PROMETHEUS", "pluginId": "prometheus", "type": "datasource", "value": "prom"}], "overwrite": false}' >> data2.json
+curl --retry-connrefused --retry 5 --retry-delay 0 -sf \
+     -X POST -H "Content-Type: application/json" \
+     --data-binary @data2.json \
+     http://grafana:3000/api/dashboards/import
 
 
 

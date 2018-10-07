@@ -13,6 +13,12 @@ Windows c:\windows\system32\drivers\etc\hosts
 <DOCKER_HOST_IP> grafana
 <DOCKER_HOST_IP> prometheus
 <DOCKER_HOST_IP> mysql
+<DOCKER_HOST_IP> mysqld-exporter
+```
+
+API Stack
+```
+api-imagegallery-client-webapi
 ```
 
 Run Zipkin/Grafana Stack
