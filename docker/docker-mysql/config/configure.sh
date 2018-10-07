@@ -35,11 +35,14 @@ SOURCE /mysql/zipkin.sql ;
 GRANT ALL PRIVILEGES ON zipkin.* TO zipkin@'%' IDENTIFIED BY 'zipkin' WITH GRANT OPTION ;
 
 
-
 CREATE DATABASE diagnostics ;
 USE diagnostics;
 GRANT ALL PRIVILEGES ON diagnostics.* TO newuser@'%' IDENTIFIED BY 'newuser' WITH GRANT OPTION ;
 
+
+
+CREATE USER 'exporter'@'localhost' IDENTIFIED BY 'exporter' WITH MAX_USER_CONNECTIONS 3;
+GRANT PROCESS, REPLICATION CLIENT, SELECT ON *.* TO 'exporter'@'localhost';
 
 
 
