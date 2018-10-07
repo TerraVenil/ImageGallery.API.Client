@@ -21,3 +21,8 @@ scrape_configs:
     metrics_path: '/metrics'
     static_configs:
       - targets: ['mysqld-exporter:9104'] 
+  - job_name: 'docker-host'
+    scrape_interval: 15s
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['127.0.0.1:9323']
