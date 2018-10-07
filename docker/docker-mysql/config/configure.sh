@@ -40,8 +40,8 @@ CREATE DATABASE diagnostics ;
 CREATE USER 'newuser'@'localhost' IDENTIFIED BY 'password';
 GRANT ALL PRIVILEGES ON * . * TO 'newuser'@'localhost';
 
-SHOW GRANTS newuser;
-SHOW DATABASES
+
+SHOW DATABASES;
 SELECT User, Host, Password FROM mysql.user; 
 
 
