@@ -37,7 +37,7 @@ GRANT ALL PRIVILEGES ON zipkin.* TO zipkin@'%' IDENTIFIED BY 'zipkin' WITH GRANT
 
 CREATE DATABASE diagnostics ;
 USE diagnostics;
-GRANT ALL PRIVILEGES ON diagnostics.* TO diaguser@'%' IDENTIFIED BY 'password' WITH GRANT OPTION ;
+GRANT ALL PRIVILEGES ON diagnostics.* TO diagnostics-user@'%' IDENTIFIED BY 'password' WITH GRANT OPTION ;
 
 USE mysql ;
 
