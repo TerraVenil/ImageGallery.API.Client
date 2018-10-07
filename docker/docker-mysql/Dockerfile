@@ -14,7 +14,7 @@ RUN /mysql/configure
 
 ADD config/run.sh /mysql/run.sh
 RUN chmod +x /mysql/run.sh
-CMD /mysql/run.sh
 
 
 EXPOSE 3306
+CMD /mysql/run.sh
