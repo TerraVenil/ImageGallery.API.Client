@@ -21,6 +21,10 @@ mysql --verbose --user=mysql --protocol=socket -uroot <<-EOSQL
 USE mysql ;
 
 -- DELETE FROM mysql.user ;
+ALTER USER 'root'@'localhost' IDENTIFIED BY 'password';
+
+
+
 DROP DATABASE IF EXISTS test ;
 
 SET GLOBAL innodb_file_format=Barracuda ;
