@@ -11,7 +11,6 @@ COPY scripts /
 COPY ImageGallery.API.Client.sln /app/ImageGallery.API.Client.sln
 COPY NuGet.config /app/NuGet.config
 
-
 WORKDIR /app
 RUN dotnet restore /p:RestoreUseSkipNonexistentTargets="false"
 
