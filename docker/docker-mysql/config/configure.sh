@@ -21,7 +21,7 @@ mysql --verbose --user=mysql --protocol=socket -uroot <<-EOSQL
 USE mysql ;
 
 -- DELETE FROM mysql.user ;
-ALTER USER 'root'@'localhost' IDENTIFIED BY 'password';
+ALTER USER 'mysql'@'localhost' IDENTIFIED BY 'password';
 
 
 
