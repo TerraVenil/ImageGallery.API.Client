@@ -42,8 +42,9 @@ GRANT ALL PRIVILEGES ON diagnostics.* TO diagnostics@'%' IDENTIFIED BY 'password
 SHOW GRANTS FOR diagnostics@'%';
 
 USE mysql ;
+GRANT ALL PRIVILEGES ON diagnostics.* TO exporter@'%' IDENTIFIED BY 'password' WITH GRANT OPTION ;
 
-CREATE USER 'exporter'@'localhost' IDENTIFIED BY 'XXXXXXXX' WITH MAX_USER_CONNECTIONS 3;
+
 
 
 SHOW DATABASES;
