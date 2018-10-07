@@ -40,7 +40,7 @@ USE diagnostics;
 GRANT ALL PRIVILEGES ON diagnostics.* TO diaguser@'%' IDENTIFIED BY 'password' WITH GRANT OPTION ;
 
 USE mysql ;
-CREATE USER 'exporter'@'%' IDENTIFIED BY 'exporter' WITH MAX_USER_CONNECTIONS 3;
+
 
 
 
