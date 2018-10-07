@@ -31,13 +31,13 @@ CREATE DATABASE zipkin ;
 
 USE zipkin;
 SOURCE /mysql/zipkin.sql ;
-
 GRANT ALL PRIVILEGES ON zipkin.* TO zipkin@'%' IDENTIFIED BY 'zipkin' WITH GRANT OPTION ;
 
 
-
 CREATE DATABASE diagnostics ;
-GRANT ALL PRIVILEGES ON zipkin.* TO newuser@'%' IDENTIFIED BY 'newuser' WITH GRANT OPTION ;
+GRANT ALL PRIVILEGES ON diagnostics.* TO diagnostics-user@'%' IDENTIFIED BY 'diagnostics-user' WITH GRANT OPTION ;
+
+
 
 
 
