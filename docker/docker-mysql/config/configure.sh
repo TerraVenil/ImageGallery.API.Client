@@ -17,6 +17,7 @@ done
 
 echo "*** Importing Schema"
 curl https://raw.githubusercontent.com/openzipkin/zipkin/$ZIPKIN_VERSION/zipkin-storage/mysql-v1/src/main/resources/mysql.sql > /mysql/zipkin.sql
+
 mysql --verbose --user=mysql --protocol=socket -uroot <<-EOSQL
 USE mysql ;
 
@@ -41,6 +42,10 @@ GRANT ALL PRIVILEGES ON diagnostics.* TO diagnostics'%' IDENTIFIED BY 'diagnosti
 FLUSH PRIVILEGES ;
 
 EOSQL
+
+
+
+
 
 echo "*** Stopping MySQL"
 pkill -f mysqld
