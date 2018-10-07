@@ -41,7 +41,7 @@ GRANT ALL PRIVILEGES ON diagnostics.* TO diaguser@'%' IDENTIFIED BY 'password' W
 
 
 CREATE USER 'exporter'@'%' IDENTIFIED BY 'exporter' WITH MAX_USER_CONNECTIONS 3;
-
+GRANT ALL PRIVILEGES ON diagnostics.* TO exporter@'%' IDENTIFIED BY 'exporter' WITH GRANT OPTION ;
 
 
 
