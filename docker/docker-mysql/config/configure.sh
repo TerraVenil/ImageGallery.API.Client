@@ -20,11 +20,10 @@ curl https://raw.githubusercontent.com/openzipkin/zipkin/$ZIPKIN_VERSION/zipkin-
 mysql --verbose --user=mysql --protocol=socket -uroot <<-EOSQL
 USE mysql ;
 
--- DELETE FROM mysql.user ;
-ALTER USER 'mysql'@'localhost' IDENTIFIED BY 'password';
+SELECT User, Host, Password FROM mysql.user; 
 
 
-
+DELETE FROM mysql.user ;
 DROP DATABASE IF EXISTS test ;
 
 SET GLOBAL innodb_file_format=Barracuda ;
@@ -34,6 +33,8 @@ USE zipkin;
 SOURCE /mysql/zipkin.sql ;
 
 GRANT ALL PRIVILEGES ON zipkin.* TO zipkin@'%' IDENTIFIED BY 'zipkin' WITH GRANT OPTION ;
+SELECT User, Host, Password FROM mysql.user; 
+
 FLUSH PRIVILEGES ;
 EOSQL
 
