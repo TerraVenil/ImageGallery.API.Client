@@ -42,7 +42,7 @@ GRANT ALL PRIVILEGES ON diagnostics.* TO diagnostics@'%' IDENTIFIED BY 'password
 SHOW GRANTS FOR diagnostics@'%';
 
 USE mysql ;
-GRANT ALL PRIVILEGES ON diagnostics.* TO exporter@'%' IDENTIFIED BY 'password' WITH GRANT OPTION ;
+GRANT PROCESS, REPLICATION CLIENT, SELECT ON *.* TO exporter@'%' IDENTIFIED BY 'password' WITH GRANT OPTION ;
 
 
 
