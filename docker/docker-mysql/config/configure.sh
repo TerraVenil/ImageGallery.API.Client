@@ -37,8 +37,10 @@ GRANT ALL PRIVILEGES ON zipkin.* TO zipkin@'%' IDENTIFIED BY 'zipkin' WITH GRANT
 
 
 CREATE DATABASE diagnostics ;
-CREATE USER 'newuser'@'localhost' IDENTIFIED BY 'password';
-GRANT ALL PRIVILEGES ON * . * TO 'newuser'@'localhost';
+GRANT ALL PRIVILEGES ON zipkin.* TO newuser@'%' IDENTIFIED BY 'newuser' WITH GRANT OPTION ;
+
+
+
 
 
 SHOW DATABASES;
