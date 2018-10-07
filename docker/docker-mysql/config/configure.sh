@@ -37,12 +37,10 @@ GRANT ALL PRIVILEGES ON zipkin.* TO zipkin@'%' IDENTIFIED BY 'zipkin' WITH GRANT
 
 CREATE DATABASE diagnostics ;
 USE diagnostics;
-GRANT ALL PRIVILEGES ON diagnostics.* TO newuser@'%' IDENTIFIED BY 'newuser' WITH GRANT OPTION ;
-
+GRANT ALL PRIVILEGES ON diagnostics.* TO diaguser@'%' IDENTIFIED BY 'password' WITH GRANT OPTION ;
 
 
 CREATE USER 'exporter'@'%' IDENTIFIED BY 'exporter' WITH MAX_USER_CONNECTIONS 3;
-GRANT PROCESS, REPLICATION CLIENT, SELECT ON *.* TO 'exporter'@'%';
 
 
 
