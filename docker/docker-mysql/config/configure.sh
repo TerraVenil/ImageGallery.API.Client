@@ -17,7 +17,6 @@ done
 
 echo "*** Importing Schema"
 curl https://raw.githubusercontent.com/openzipkin/zipkin/$ZIPKIN_VERSION/zipkin-storage/mysql-v1/src/main/resources/mysql.sql > /mysql/zipkin.sql
-
 mysql --verbose --user=mysql --protocol=socket -uroot <<-EOSQL
 USE mysql ;
 
@@ -26,28 +25,25 @@ DROP DATABASE IF EXISTS test ;
 
 SET GLOBAL innodb_file_format=Barracuda ;
 
-CREATE DATABASE zipkin;
-CREATE DATABASE diagnostics;
+CREATE DATABASE zipkin ;
+CREATE DATABASE diagnostics ;
+SHOW DATABASES
 
 USE zipkin;
 SOURCE /mysql/zipkin.sql ;
 
 GRANT ALL PRIVILEGES ON zipkin.* TO zipkin@'%' IDENTIFIED BY 'zipkin' WITH GRANT OPTION ;
+ 
 
-
-
+USE diagnostics;
 CREATE USER 'diagnostics'@'localhost' IDENTIFIED BY 'password';
 
 
 
 
-
 FLUSH PRIVILEGES ;
+
 EOSQL
-
-
-
-
 
 echo "*** Stopping MySQL"
 pkill -f mysqld
