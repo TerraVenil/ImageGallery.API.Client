@@ -32,7 +32,7 @@ namespace ImageGallery.API.Client.WebApi
                 .WriteTo.Console(theme: SystemConsoleTheme.Literate)
                 .WriteTo.Logger(lc => lc
                     .Filter.ByExcluding(_ => !config.MySqlLoggerConfiguration.Enabled)
-                    .WriteTo.MySQL(config.MySqlLoggerConfiguration.ConnectionString))
+                    .WriteTo.MySQL(config.MySqlLoggerConfiguration.ConnectionString, "logs_webapi"))
                 .CreateLogger();
 
             Serilog.Debugging.SelfLog.Enable(msg =>
