@@ -28,6 +28,10 @@ COPY --from=build-env /*.sh /
 RUN apt-get update && apt-get install -y \
         curl \
         apt-transport-https \
+        dnsutils \ 
+        iputils-ping \
+        nmap \ 
+        telnet \
     && rm -rf /var/lib/apt/lists/* \
     && curl https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh > /wait_for_it.sh \
     && chmod +x /*.sh
