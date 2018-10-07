@@ -9,14 +9,13 @@ Build Image  | [![Build Status](https://jenkins.navigatorglass.com/buildStatus/i
 
 ```
 ├── docker-grafana
-│   ├── Dockerfile              # Dockerfile that adds config to the image
+│   ├── Dockerfile              # Dockerfile 
 │   ├── config.ini              # Grafana config
 |   |
 │   ├── dashboards              # Grafana dashboards
 │   │   └── dashboards.json
 |   │
-│   └── provisioning            # Configuration for automatic provisioning at
-│       │                       # grafana startup.
+│   └── provisioning
 │       ├── dashboards
 │       │   └── all.yml         # Configuration dashboard provisioning
 │       └── datasources
