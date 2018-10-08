@@ -3,6 +3,7 @@ FROM alpine:latest
 RUN apk add --update \
     curl \
     jq \
+    nodejs \
 && rm -rf /var/cache/apk/*
 
 

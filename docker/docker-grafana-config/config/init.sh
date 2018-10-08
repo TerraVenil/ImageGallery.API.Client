@@ -1,12 +1,13 @@
 #!/bin/sh
  
-set -xeuo pipefail
+#set -xeuo pipefail
+
 
 # create new user - L: viewer P:readonly
-curl --retry-connrefused --retry 5 --retry-delay 0 -sf \
+curl --retry 5 --retry-delay 0 -sf \
     -X POST -H "Content-Type: application/json" \
     -d '{ "name":"viewer", "email":"viewer@org.com", "login":"viewer",  "password":"readonly" }' \
-    http://admin:admin@grafana:3000/api/admin/users 
+    http://$grafana_cred@grafana:3000/api/admin/users 
 
 
 # set user's home dashboard   
@@ -19,7 +20,7 @@ curl \
 
 
 ## DataSource 
-if ! curl --retry 5 --retry-connrefused --retry-delay 0 -sf http://grafana:3000/api/dashboards/name/prom; then
+if ! curl --retry 5 --retry-delay 0 -sf $grafana_host/api/dashboards/name/prom; then
     curl -sf -X POST -H "Content-Type: application/json" \
          --data-binary '{"name":"prom","type":"prometheus","url":"http://prometheus:9090","access":"proxy","isDefault":true}' \
          http://grafana:3000/api/datasources
@@ -30,12 +31,6 @@ fi
 # 6257 NFS Full - https://github.com/rfrail3/grafana-dashboards
 # 1598 - Zipkin / Prometheus
 grafana_dashboard_import () {
-
-    grafana_host="http://grafana:3000"
-    grafana_cred="admin:admin"
-    grafana_datasource="prometheus"
-    
-    ds=(6239 1598);
 
     for d in "${ds[@]}"; do
        echo -e "Processing $d:"
@@ -53,7 +48,17 @@ grafana_dashboard_import () {
 }
 
 
+grafana_host="http://grafana:3000"
+grafana_cred="admin:admin"
+grafana_datasource="prometheus"
+ds=(6239 1598);
+
+
 grafana_dashboard_import;
+
+
+
+
 
 
 
