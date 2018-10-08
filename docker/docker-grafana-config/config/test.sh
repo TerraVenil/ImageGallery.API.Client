@@ -18,7 +18,7 @@ grafana_dashboard_import () {
 
 
 
-grafana_dashboard_import 7154
+grafana_dashboard_import 6239
 
 
 
