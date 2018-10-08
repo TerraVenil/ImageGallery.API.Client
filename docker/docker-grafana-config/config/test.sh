@@ -2,8 +2,10 @@
  
 
 grafana_dashboard_import () {
-  echo dashboard_id $1
+  
   dashboard_id=$1
+  echo dashboard_id $1
+  
   last_revision=$(curl -sf https://grafana.com/api/dashboards/${dashboard_id}/revisions | grep '"revision":' | sed 's/ *"revision": \([0-9]*\),/\1/' | sort -n | tail -1)
 
   echo ', "inputs": [{"name": "DS_PROMETHEUS", "pluginId": "prometheus", "type": "datasource", "value": "prom"}], "overwrite": false}' >> data.json
