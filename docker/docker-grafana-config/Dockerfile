@@ -1,4 +1,6 @@
-FROM appropriate/curl
+FROM alpine:latest
+
+RUN apk add --update curl && rm -rf /var/cache/apk/*
 
 USER root
 COPY config/init.sh .
