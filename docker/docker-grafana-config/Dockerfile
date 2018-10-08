@@ -6,10 +6,12 @@ RUN apk add --update \
     nodejs \
 && rm -rf /var/cache/apk/*
 
+RUN npm install -g wizzy
+
 
 USER root
 COPY config/init.sh .
 RUN chmod +x -c /init.sh
 
-
-ENTRYPOINT ["/init.sh"]
+CMD ["/init.sh"]
+# ENTRYPOINT ["/init.sh"]
