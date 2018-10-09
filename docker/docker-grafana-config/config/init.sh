@@ -32,6 +32,8 @@ fi
 # 1598 - Zipkin / Prometheus
 grafana_dashboard_import () {
 
+    ds=(6239 1598);
+
     for d in "${ds[@]}"; do
        echo -e "Processing $d:"
 
@@ -51,8 +53,6 @@ grafana_dashboard_import () {
 grafana_host="http://grafana:3000"
 grafana_cred="admin:admin"
 grafana_datasource="prometheus"
-ds=(6239 1598)
-
 
 grafana_dashboard_import;
 
