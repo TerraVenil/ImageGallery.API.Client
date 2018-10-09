@@ -32,7 +32,7 @@ fi
 # 1598 - Zipkin / Prometheus
 grafana_dashboard_import () {
 
-    ds=(6239 1598);
+    ds=(6239 1598)
 
     for d in "${ds[@]}"; do
        echo -e "Processing $d:"
