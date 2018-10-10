@@ -14,5 +14,5 @@ USER root
 COPY config/init.sh .
 RUN chmod +x -c /init.sh
 
-CMD ["/init.sh"]
-# ENTRYPOINT ["/init.sh"]
+
+ENTRYPOINT ["/init.sh"]
