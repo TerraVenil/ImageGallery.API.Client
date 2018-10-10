@@ -1,6 +1,7 @@
 FROM alpine:latest
 
 RUN apk add --update \
+    bash \
     curl \
     jq \
     nodejs \
