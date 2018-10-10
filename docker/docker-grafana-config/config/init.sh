@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -eo pipefail
+set -ex
 
 # create new user - L: viewer P:readonly
 curl --retry 5 --retry-delay 0 -sf \
@@ -17,12 +17,24 @@ curl \
  http://viewer:readonly@grafana:3000/api/user/preferences
 
 
-## DataSource 
-if ! curl --retry 5 --retry-delay 0 -sf http://grafana:3000/api/dashboards/name/prom; then
-    curl -sf -X POST -H "Content-Type: application/json" \
-         --data-binary '{"name":"prom","type":"prometheus","url":"http://prometheus:9090","access":"proxy","isDefault":true}' \
-         http://grafana:3000/api/datasources
-fi
+
+grafana_datasource_import() {
+
+    grafana_host="http://grafana:3000"
+    grafana_cred="admin:admin"
+    datasource_name="prom"
+    datasource_type="prometheus"
+    
+
+    if ! curl --retry 5 --retry-delay 0 -sf http://admin:admin@grafana:3000/api/datasources/name/$datasource_name; then
+        curl -v -s -k -u "$grafana_cred" -XPOST -H "Accept: application/json" \
+            -H "Content-Type: application/json" \
+            -d  '{"name":"prom","type":"prometheus","url":"http://prometheus:9090","access":"proxy","isDefault":true}' \
+            $grafana_host/api/datasources; echo ""
+    fi
+}
+
+grafana_datasource_import;
 
 
 # 6239 - Mysql - Prometheus

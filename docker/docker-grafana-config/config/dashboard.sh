@@ -1,7 +1,13 @@
 #!/bin/bash
 
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+
 # 6239 - Mysql - Prometheus
-# 6257 NFS Full - https://github.com/rfrail3/grafana-dashboards
+# 6257 NFS Full -
 # 1598 - Zipkin / Prometheus
 grafana_dashboard_import () {
 
@@ -12,7 +18,7 @@ grafana_dashboard_import () {
     ds=(6239 1598);
 
     for d in "${ds[@]}"; do
-       echo -e "Processing $d:"
+       printf "*** Importing Dashboard *** ${GREEN}$d${NC}:\n"
 
         j=$(curl -s -k -u "$grafana_cred" $grafana_host/api/gnet/dashboards/$d | jq .json)
         
