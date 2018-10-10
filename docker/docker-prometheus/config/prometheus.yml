@@ -41,3 +41,6 @@ scrape_configs:
     metrics_path: /metrics/
     static_configs:
       - targets: ['java:8080']
+
+
+      
