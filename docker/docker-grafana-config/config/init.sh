@@ -18,7 +18,7 @@ curl \
 
 
 ## DataSource 
-if ! curl --retry 5 --retry-delay 0 -sf $grafana_host/api/dashboards/name/prom; then
+if ! curl --retry 5 --retry-delay 0 -sf http://grafana:3000/api/dashboards/name/prom; then
     curl -sf -X POST -H "Content-Type: application/json" \
          --data-binary '{"name":"prom","type":"prometheus","url":"http://prometheus:9090","access":"proxy","isDefault":true}' \
          http://grafana:3000/api/datasources
