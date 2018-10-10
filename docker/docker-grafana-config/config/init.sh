@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -eo pipefail
+
 # create new user - L: viewer P:readonly
 curl --retry 5 --retry-delay 0 -sf \
     -X POST -H "Content-Type: application/json" \
