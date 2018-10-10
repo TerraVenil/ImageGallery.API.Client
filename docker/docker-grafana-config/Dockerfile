@@ -1,6 +1,7 @@
 FROM alpine:latest
 
 RUN apk add --update \
+    bash \
     curl \
     jq \
     nodejs \
@@ -8,7 +9,6 @@ RUN apk add --update \
 && rm -rf /var/cache/apk/*
 
 RUN npm install -g wizzy
-
 
 USER root
 COPY config/init.sh .

@@ -4,10 +4,11 @@ services:
   
   storage:
     image: stuartshay/imagegallery-mysql:v1
-    #image: openzipkin/zipkin-mysql
     container_name: mysql
     ports:
       - 3306:3306
+    networks:
+      - backend
 
   storage-exporter:
     image: prom/mysqld-exporter
@@ -17,7 +18,9 @@ services:
     depends_on:
       - storage
     environment:
-      - DATA_SOURCE_NAME="user:password@(my-mysql-network:3306)/"
+      - DATA_SOURCE_NAME="exporter:password@(mysql:3306)/"
+    networks:
+      - backend
 
 
   # The zipkin process services the UI, and also exposes a POST endpoint that
@@ -43,6 +46,11 @@ services:
       # - 9410:9410
     depends_on:
       - storage
+    networks:
+      - backend
+
+
+
 
   # Adds a cron to process spans since midnight every hour, and all spans each day
   # This data is served by http://192.168.99.100:8080/dependency
@@ -63,6 +71,8 @@ services:
       # - JAVA_OPTS=-verbose:gc -Xms1G -Xmx1G
     depends_on:
       - storage
+    networks:
+      - backend
   
   prometheus:
     image: stuartshay/imagegallery-prometheus:v2.4.2
@@ -87,22 +97,26 @@ services:
       - 3000:3000
     depends_on:
       - prometheus
-    environment:
-      - GF_AUTH_ANONYMOUS_ENABLED=true
-      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+  #  environment:
+  #    - GF_AUTH_ANONYMOUS_ENABLED=true
+  #    - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
 
   setup_grafana_datasource:
     image: stuartshay/imagegallery-grafana:config
     container_name: setup_grafana_datasource
     depends_on:
       - grafana
+    networks:
+      - backend
     #volumes:
     #  - ./prometheus/create-datasource-and-dashboard.sh:/create.sh:ro
     # command: /create.sh
 
-
-
-
 volumes:
   prometheus_data: {}
+
+networks:
+  frontend:
+  backend:
+
 
