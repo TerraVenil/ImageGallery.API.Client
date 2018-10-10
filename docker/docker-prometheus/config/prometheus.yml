@@ -3,26 +3,41 @@ global:
   evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
 
 scrape_configs:
+
   - job_name: 'prometheus'
     static_configs:
       - targets: ['localhost:9090']
+
   - job_name: 'zipkin'
     scrape_interval: 5s
     metrics_path: '/prometheus'
     static_configs:
       - targets: ['zipkin:9411']
+
   - job_name: 'api-imagegallery-client-webapi'
     scrape_interval: 5s
     metrics_path: '/metrics-text'
     static_configs:
       - targets: ['api-imagegallery-client-webapi:3333'] 
+
   - job_name: 'mysqld-exporter'
     scrape_interval: 5s
     metrics_path: '/metrics'
     static_configs:
       - targets: ['mysqld-exporter:9104'] 
+
   - job_name: 'docker-host'
     scrape_interval: 15s
     metrics_path: /metrics
     static_configs:
-      - targets: ['127.0.0.1:9323']
+      - targets: ['host.docker.internal:9323']
+
+  - job_name: 'java-app'
+    metrics_path: /app-metrics/
+    static_configs:
+      - targets: ['java:8080']
+
+  - job_name: 'java-tomcat'
+    metrics_path: /metrics/
+    static_configs:
+      - targets: ['java:8080']
