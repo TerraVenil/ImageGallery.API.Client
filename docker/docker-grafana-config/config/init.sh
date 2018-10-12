@@ -74,7 +74,7 @@ grafana_dashboard_import () {
 }
 
 configure_grafana() {
-    wait_for_api
+   # wait_for_api
     grafana_datasource_import
     grafana_dashboard_import
 }
