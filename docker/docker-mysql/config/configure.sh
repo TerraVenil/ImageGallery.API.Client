@@ -45,11 +45,8 @@ USE mysql ;
 GRANT PROCESS, REPLICATION CLIENT, SELECT ON *.* TO exporter@'%' IDENTIFIED BY 'password' WITH GRANT OPTION ;
 
 
-
-
 SHOW DATABASES;
 SELECT User, Host, Password FROM mysql.user; 
-
 
 
 FLUSH PRIVILEGES ;

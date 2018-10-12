@@ -89,6 +89,8 @@ services:
       - '--storage.tsdb.path=/prometheus'
       - '--web.console.libraries=/usr/share/prometheus/console_libraries'
       - '--web.console.templates=/usr/share/prometheus/consoles'
+    networks:
+      - backend
 
   grafana:
     image: stuartshay/imagegallery-grafana:v5.2.4-v2
@@ -97,20 +99,20 @@ services:
       - 3000:3000
     depends_on:
       - prometheus
+    networks:
+      - backend
   #  environment:
   #    - GF_AUTH_ANONYMOUS_ENABLED=true
   #    - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
 
-  setup_grafana_datasource:
-    image: stuartshay/imagegallery-grafana:config
-    container_name: setup_grafana_datasource
+  grafana_config:
+    image: stuartshay/imagegallery-grafana:config-v2
+    container_name: grafana_config
     depends_on:
       - grafana
     networks:
       - backend
-    #volumes:
-    #  - ./prometheus/create-datasource-and-dashboard.sh:/create.sh:ro
-    # command: /create.sh
+
 
 volumes:
   prometheus_data: {}

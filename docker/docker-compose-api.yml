@@ -9,3 +9,11 @@ services:
     ports:
       - 9150:8150
       - 4333:3333
+    networks:
+      - backend
+      - frontend
+
+
+networks:
+  frontend:
+  backend:
