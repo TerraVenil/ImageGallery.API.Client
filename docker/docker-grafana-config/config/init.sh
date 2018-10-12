@@ -34,8 +34,6 @@ grafana_datasource_import() {
     fi
 }
 
-grafana_datasource_import;
-
 
 # 6239 - Mysql - Prometheus
 # 6257 NFS Full - https://github.com/rfrail3/grafana-dashboards
@@ -46,7 +44,7 @@ grafana_dashboard_import () {
     grafana_cred="admin:admin"
     grafana_datasource="prometheus"
     
-    ds=(6239 1598);
+    ds=(6239 1598)
 
     for d in "${ds[@]}"; do
        echo -e "Processing $d:"
@@ -63,7 +61,15 @@ grafana_dashboard_import () {
     done
 }
 
-grafana_dashboard_import;
+configure_grafana() {
+    grafana_datasource_import
+    grafana_dashboard_import
+}
+
+
+configure_grafana
+exit 0
+
 
 
 
