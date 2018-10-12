@@ -18,7 +18,4 @@ RUN apk add --update \
 
 RUN npm install -g wizzy
 
-#CMD ["/init.sh"]
-#ENTRYPOINT ["/init.sh"]
-
 ENTRYPOINT ["/entrypoint.sh"]
