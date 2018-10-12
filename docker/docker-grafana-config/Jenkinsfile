@@ -5,11 +5,10 @@ node('docker') {
         git branch: 'master', credentialsId: 'gihub-key', url: 'git@github.com:stuartshay/ImageGallery.API.Client.git'
     }
 
-
     stage('Docker') {
-        sh 'docker build -f docker/docker-grafana-config/Dockerfile -t stuartshay/imagegallery-grafana:config ./docker/docker-grafana-config'
+        sh 'docker build -f docker/docker-grafana-config/Dockerfile -t stuartshay/imagegallery-grafana:config-v2 ./docker/docker-grafana-config'
         withDockerRegistry([credentialsId: 'docker-hub-navigatordatastore']) {
-            sh 'docker push stuartshay/imagegallery-grafana:config'
+            sh 'docker push stuartshay/imagegallery-grafana:config-v2 '
         }
     }
 

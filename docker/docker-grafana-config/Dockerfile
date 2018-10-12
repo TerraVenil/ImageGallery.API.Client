@@ -1,18 +1,23 @@
 FROM alpine:latest
 
+USER root
+
+COPY entrypoint.sh .
+COPY config/init.sh .
+
 RUN apk add --update \
     bash \
     curl \
     jq \
     nodejs \
     nodejs-npm \
-&& rm -rf /var/cache/apk/*
+ && rm -rf /var/cache/apk/* \
+ && curl https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh > /wait_for_it.sh \
+ && chmod +x /*.sh
 
 RUN npm install -g wizzy
 
-USER root
-COPY config/init.sh .
-RUN chmod +x -c /init.sh
-
 #CMD ["/init.sh"]
-ENTRYPOINT ["/init.sh"]
+#ENTRYPOINT ["/init.sh"]
+
+ENTRYPOINT ["/entrypoint.sh"]
