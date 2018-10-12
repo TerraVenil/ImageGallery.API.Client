@@ -2,21 +2,33 @@
 
 set -ex
 
-# create new user - L: viewer P:readonly
-curl --retry 5 --retry-delay 0 -sf \
-    -X POST -H "Content-Type: application/json" \
-    -d '{ "name":"viewer", "email":"viewer@org.com", "login":"viewer",  "password":"readonly" }' \
-    http://admin:admin@grafana:3000/api/admin/users 
+wait_for_api() {
+ 
+  grafana_host="http://grafana:3000"
+  
+  until $(curl --output /dev/null --silent --head --fail $grafana_host); do
+    printf '.'
+    sleep 5
+   done
+}
 
 
-# set user's home dashboard   
-curl \
- -X PUT \
- -H 'Content-Type: application/json' \
- -d '{ "homeDashboardId":1 }' \
- http://viewer:readonly@grafana:3000/api/user/preferences
+grafana_create_user() {
+
+    # create new user - L: viewer P:readonly
+    curl --retry 5 --retry-delay 0 -sf \
+        -X POST -H "Content-Type: application/json" \
+        -d '{ "name":"viewer", "email":"viewer@org.com", "login":"viewer",  "password":"readonly" }' \
+        http://admin:admin@grafana:3000/api/admin/users 
 
 
+    # set user's home dashboard   
+    curl \
+    -X PUT \
+    -H 'Content-Type: application/json' \
+    -d '{ "homeDashboardId":1 }' \
+    http://viewer:readonly@grafana:3000/api/user/preferences
+}
 
 grafana_datasource_import() {
 
@@ -34,11 +46,11 @@ grafana_datasource_import() {
     fi
 }
 
-
-# 6239 - Mysql - Prometheus
-# 6257 NFS Full - https://github.com/rfrail3/grafana-dashboards
-# 1598 - Zipkin / Prometheus
 grafana_dashboard_import () {
+
+    # 6239 - Mysql - Prometheus
+    # 6257 NFS Full - https://github.com/rfrail3/grafana-dashboards
+    # 1598 - Zipkin / Prometheus
 
     grafana_host="http://grafana:3000"
     grafana_cred="admin:admin"
@@ -62,6 +74,7 @@ grafana_dashboard_import () {
 }
 
 configure_grafana() {
+    wait_for_api
     grafana_datasource_import
     grafana_dashboard_import
 }
